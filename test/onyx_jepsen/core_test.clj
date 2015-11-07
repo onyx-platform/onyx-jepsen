@@ -9,5 +9,4 @@
   "1.2.3")
 
 (deftest basic-test
-  (binding [c/*private-key-path* "/home/vagrant/.ssh/id_rsa"]
-    (is (:valid? (:results (jc/run! (oj/basic-test version)))))))
+  (is (:valid? (:results (jc/run! (oj/basic-test version))))))
