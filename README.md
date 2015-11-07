@@ -1,6 +1,6 @@
 # onyx-jepsen
 
-A Clojure library designed to ... well, that part is up to you.
+Jepsen testing Onyx. **Work in progress**
 
 ## Usage
 
