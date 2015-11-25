@@ -7,13 +7,11 @@
             [onyx.plugin.core-async]
             [onyx.api]))
 
-(defn -main [onyx-id n & args]
+(defn -main [n & args]
   (let [n-peers (Integer/parseInt n)
-        env-config (assoc (-> "prod-env-config.edn"
-                              resource slurp read-string) :onyx/id onyx-id)
+        env-config (-> "prod-env-config.edn" resource slurp read-string)
         env (onyx.api/start-env env-config)
-        peer-config (assoc (-> "prod-peer-config.edn"
-                               resource slurp read-string) :onyx/id onyx-id)
+        peer-config (-> "prod-peer-config.edn" resource slurp read-string)
         peer-group (onyx.api/start-peer-group peer-config)
         peers (onyx.api/start-peers n-peers peer-group)]
     (.addShutdownHook (Runtime/getRuntime)

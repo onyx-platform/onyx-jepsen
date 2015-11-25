@@ -1,6 +1,7 @@
-{:zookeeper/address "n1:2181,n2:2181:n3:2181:n4:2181:n5:2181"
+{:zookeeper/address "n1:2181,n2:2181,n3:2181,n4:2181,n5:2181"
  :onyx.peer/job-scheduler :onyx.job-scheduler/greedy
  :onyx.messaging/impl :aeron
+ :onyx/id "JEPSENONYXID"
  ;; Change "localhost" to a resolvable hostname
  ;; by any node in your cluster.
  :onyx.messaging/bind-addr "localhost"
