@@ -29,6 +29,10 @@
   (:import [org.apache.bookkeeper.client LedgerHandle LedgerEntry BookKeeper BookKeeper$DigestType AsyncCallback$AddCallback]
            [knossos.core Model]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; BookKeeper only test code
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (def version "0.8.0")
 
 (defn zk-node-ids
@@ -225,14 +229,16 @@
                                        (and (= (:f action) :add)
                                             (= (:type action) :ok)))
                                      history)
-          added-values (sort (map :value successfully-added))
-          read-values (sort (reduce into [] results))
-          all-written-read? (= added-values read-values)] 
+          added-values (set (map :value successfully-added))
+          read-values (set (reduce into [] results))
+          all-written-read? (clojure.set/difference added-values read-values)
+          unacked-writes-read (clojure.set/difference read-values added-values)] 
       {:valid? (and all-in-order? all-written-read?)
        :in-order? all-in-order?
        :added added-values
        :read-values read-values
-       :all-written-read? all-written-read?})))
+       :unacknowledged-writes-read unacked-writes-read
+       :all-written-read? (empty? all-written-read?)})))
 
 (defrecord OnyxModel []
   Model
