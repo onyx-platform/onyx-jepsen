@@ -1,5 +1,7 @@
 (ns onyx-jepsen.checker
   (:require [onyx.extensions]
+            [jepsen [checker :as checker]]
+            [onyx.log.replica :as replica]
             [clojure.core.async :as casync :refer [chan >!! <!! close! alts!!]]))
 
 (defn read-peer-log [log]
@@ -11,12 +13,12 @@
         (recur (conj entries entry))
         entries))))
 
-(def base-replica
+(defn base-replica [peer-config]
   (merge replica/base-replica 
          {:job-scheduler (:onyx.peer/job-scheduler peer-config)
           :messaging (select-keys peer-config [:onyx.messaging/impl])}))
 
-(defrecord Checker [n-peers]
+(defrecord Checker [peer-config n-peers]
   checker/Checker
   (check [checker test model history]
     (let [ledger-reads (first (filter (fn [action]
@@ -28,7 +30,7 @@
                                                        (= (:type action) :ok)))
                                                 history)))
           final-replica (reduce #(onyx.extensions/apply-log-entry %2 %1)
-                                base-replica
+                                (base-replica peer-config)
                                 peer-log-reads) 
 
           all-peers-up? (= (count (:peers final-replica))

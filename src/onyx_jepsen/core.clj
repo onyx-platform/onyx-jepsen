@@ -10,7 +10,6 @@
             ;; Onyx!
             [onyx.state.log.bookkeeper :as obk]
             [onyx.log.zookeeper]
-            [onyx.log.replica :as replica]
             [onyx.compression.nippy :as nippy]
             [onyx.api]
             [onyx.extensions]
@@ -161,13 +160,13 @@
 
 (defrecord WriteLogClient [client job-data ledger-handles ledger-handle ledger-ids onyx-client]
   client/Client
-  (setup! [_ test node]
+  (setup! [this test node]
     (let [client (bookkeeper-client)
           lh (obk/new-ledger client env-config)
           onyx-client (component/start (onyx.system/onyx-client peer-config))]
       (swap! ledger-ids conj (.getId lh))
       (swap! ledger-handles conj lh)
-      (WriteLogClient. client lh ledger-ids onyx-client)))
+      (assoc this :ledger-handle lh :onyx-client onyx-client)))
 
   (invoke! [this test op]
     (let [zk-addr (:zookeeper/address env-config)
@@ -178,7 +177,7 @@
                                 (try
                                   (assoc op 
                                          :type :ok 
-                                         :value (read-peer-log (:log onyx-client)))
+                                         :value (onyx-checker/read-peer-log (:log onyx-client)))
                                   (catch Throwable t
                                     (assoc op :type :info :value t))))
         :close-ledgers-await-completion (timeout 2000000
@@ -292,7 +291,7 @@
           :db (setup version)
           :client (write-log-client (atom nil) (atom []) (atom []))
           :model (->OnyxModel) ;; Not actually used for anything currently
-          :checker (onyx-checker/->Checker (:n-peers peer-setup))
+          :checker (onyx-checker/->Checker peer-config (:n-peers peer-setup))
           :generator (gen/phases
                        (->> (onyx-gen/filter-new identity 
                                                  (onyx-gen/frequency [(adds) 
