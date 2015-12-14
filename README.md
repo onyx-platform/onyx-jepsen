@@ -2,8 +2,25 @@
 
 Jepsen testing Onyx. **Work in progress**
 
+To run:
+
+1. Setup docker machine:
 ```
-hostname d1 && grep -v "127" /etc/hosts > hosts.tmp && echo "127.0.0.1   localhost d1" >> hosts.tmp && cat hosts.tmp > /etc/hosts && cd /onyx-jepsen/ && lein test
+DO SOMETHING
+```
+
+2. Start docker in docker instance:
+```
+./scripts/start.sh uberjar
+```
+
+3. Run from inside docker in docker.
+```
+./run thing
+```
+
+```
+ for i in "n1 n2 n3 n4 n5"; do scp $i:/onyx.log 
 ```
 
 Discoveries thus far:
@@ -12,6 +29,12 @@ Discoveries thus far:
 Therefore it needs to be monitored so that the server comes back up after a
 partition.
 * Fix for written but *not* acknowledged?
+
+## Notes
+
+Uses peers with the following configuration to avoid resource starvation running on a single machine:
+
+-D"aeron.client.liveness.timeout=50000000000" -D"aeron.threading.mode=SHARED" -server -XX:+UseG1GC 
 
 ## Usage
 
