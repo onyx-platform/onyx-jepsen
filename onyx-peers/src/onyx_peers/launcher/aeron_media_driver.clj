@@ -5,7 +5,7 @@
            [uk.co.real_logic.aeron.driver MediaDriver MediaDriver$Context ThreadingMode]))
 
 (defn -main [& args]
-  (let [ctx (doto (MediaDriver$Context.) )
+  (let [ctx (doto (MediaDriver$Context.))
         media-driver (MediaDriver/launch ctx)]
     (println "Launched the Media Driver. Blocking forever...")
     (<!! (chan))))
