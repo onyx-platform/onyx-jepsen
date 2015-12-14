@@ -1,0 +1,339 @@
+######################################################################
+###
+### Probably a starvation issue
+Two nodes did this, job never finished:
+
+15-Dec-09 07:41:47 n5 WARN [onyx.messaging.aeron.publication-manager] - Aeron messaging publication error: uk.co.real_logic.aeron.exceptions.ConductorServiceTimeoutException: Timeout between service calls over 5000000000ns
+15-Dec-09 07:41:47 n5 WARN [onyx.messaging.aeron] - 
+                                  java.lang.Thread.run           Thread.java: 745
+    uk.co.real_logic.agrona.concurrent.AgentRunner.run      AgentRunner.java: 105
+         uk.co.real_logic.aeron.ClientConductor.doWork  ClientConductor.java: 113
+         uk.co.real_logic.aeron.ClientConductor.doWork  ClientConductor.java: 295
+uk.co.real_logic.aeron.ClientConductor.onCheckTimeouts  ClientConductor.java: 340
+uk.co.real_logic.aeron.exceptions.ConductorServiceTimeoutException: Timeout between service calls over 5000000000ns
+
+
+######################################################################
+###
+
+;; probably a timed out submit job
+;; yup, increased timeout
+
+INFO  onyx-jepsen.core - awaiting job completion
+INFO  jepsen.util - 6   :info   :read-ledgers   #error {
+ :cause nil
+ :via
+ [{:type java.lang.NullPointerException
+   :message nil
+   :at [java.util.UUID fromString "UUID.java" 192]}]
+ :trace
+ [[java.util.UUID fromString "UUID.java" 192]
+  [onyx.static.validation$coerce_uuid invoke "validation.clj" 339]
+  [onyx.api$await_job_completion invoke "api.clj" 235]
+  [onyx.api$await_job_completion invoke "api.clj" 233]
+  [onyx_jepsen.core.WriteLogClient$fn__28015 invoke "core.clj" 214]
+  [clojure.core$binding_conveyor_fn$fn__4444 invoke "core.clj" 1916]
+  [clojure.lang.AFn call "AFn.java" 18]
+  [java.util.concurrent.FutureTask run "FutureTask.java" 266]
+  [java.util.concurrent.ThreadPoolExecutor runWorker "ThreadPoolExecutor.java" 1142]
+  [java.util.concurrent.ThreadPoolExecutor$Worker run "ThreadPoolExecutor.java" 617]
+
+######################################################################
+###
+### Probably all a starvation issue.
+
+15-Dec-09 10:26:38 n2 INFO [onyx.peer.task-lifecycle] - [332a19d5-d4e3-4663-821f-37d687bbe9fa] Not enough virtual peers have warmed up to start the task yet, backing off and trying again...
+15-Dec-09 10:26:38 n2 INFO [onyx.messaging.aeron.publication-group] - Publication udp://10.0.0.6:40200 GC'd after non use within 60000
+15-Dec-09 10:26:38 n2 INFO [onyx.messaging.aeron.publication-manager] - Stopped publication manager at: udp://10.0.0.6:40200, stream-id: 0
+15-Dec-09 10:26:38 n2 FATAL [onyx.messaging.aeron.publication-manager] - Writing to closed publication. java.lang.IllegalStateException: Publication is closed: channel=udp://10.0.0.6:40200 streamId=0 sessionId=1581046651 registrationId=58
+15-Dec-09 10:26:38 n2 INFO [onyx.messaging.aeron.publication-manager] - Stopped publication manager at: udp://10.0.0.6:40200, stream-id: 0
+15-Dec-09 10:26:38 n2 INFO [onyx.messaging.aeron.publication-group] - Publication udp://10.0.0.2:40200 GC'd after non use within 60000
+15-Dec-09 10:26:38 n2 INFO [onyx.messaging.aeron.publication-manager] - Stopped publication manager at: udp://10.0.0.2:40200, stream-id: 0
+15-Dec-09 10:26:38 n2 INFO [onyx.messaging.aeron.publication-group] - Publication udp://10.0.0.5:40200 GC'd after non use within 60000
+15-Dec-09 10:26:38 n2 INFO [onyx.messaging.aeron.publication-manager] - Stopped publication manager at: udp://10.0.0.5:40200, stream-id: 0
+15-Dec-09 10:26:38 n2 INFO [onyx.messaging.aeron.publication-group] - Publication udp://10.0.0.4:40200 GC'd after non use within 60000
+15-Dec-09 10:26:38 n2 INFO [onyx.messaging.aeron.publication-manager] - Stopped publication manager at: udp://10.0.0.4:40200, stream-id: 0
+
+
+
+15-Dec-09 10:25:12 n3 INFO [onyx.messaging.aeron.publication-group] - Publication udp://10.0.0.6:40200 GC'd after non use within 60000
+15-Dec-09 10:25:12 n3 INFO [onyx.messaging.aeron.publication-manager] - Stopped publication manager at: udp://10.0.0.6:40200, stream-id: 1
+15-Dec-09 10:25:12 n3 FATAL [onyx.messaging.aeron.publication-manager] - Writing to closed publication. java.lang.IllegalStateException: Publication is closed: channel=udp://10.0.0.6:40200 streamId=1 sessionId=-877457121 registrationId=66
+15-Dec-09 10:25:12 n3 INFO [onyx.messaging.aeron.publication-manager] - Stopped publication manager at: udp://10.0.0.6:40200, stream-id: 1
+15-Dec-09 10:25:12 n3 INFO [onyx.messaging.aeron.publication-group] - Publication udp://10.0.0.3:40200 GC'd after non use within 60000
+15-Dec-09 10:25:12 n3 INFO [onyx.messaging.aeron.publication-manager] - Stopped publication manager at: udp://10.0.0.3:40200, stream-id: 0
+15-Dec-09 10:25:12 n3 INFO [onyx.plugin.bookkeeper] - Write batch: []
+15-Dec-09 10:25:12 n3 INFO [onyx.messaging.aeron.publication-group] - Publication udp://10.0.0.2:40200 GC'd after non use within 60000
+15-Dec-09 10:25:12 n3 INFO [onyx.messaging.aeron.publication-manager] - Stopped publication manager at: udp://10.0.0.2:40200, stream-id: 1
+15-Dec-09 10:25:12 n3 INFO [onyx.plugin.bookkeeper] - Write batch: []
+15-Dec-09 10:25:12 n3 INFO [onyx.messaging.aeron.publication-group] - Publication udp://10.0.0.5:40200 GC'd after non use within 60000
+15-Dec-09 10:25:12 n3 INFO [onyx.messaging.aeron.publication-manager] - Stopped publication manager at: udp://10.0.0.5:40200, stream-id: 0
+
+
+
+15-Dec-09 10:12:44 n4 INFO [onyx.log.zookeeper] - P1 java.lang.IllegalStateException: Client is not started
+15-Dec-09 10:15:09 n4 FATAL [onyx.messaging.aeron.publication-manager] - Writing to closed publication. java.lang.IllegalStateException: Publication is closed: channel=udp://10.0.0.6:40200 streamId=0 sessionId=2134388775 registrationId=29
+15-Dec-09 10:17:20 n4 FATAL [onyx.messaging.aeron.publication-manager] - Writing to closed publication. java.lang.IllegalStateException: Publication is closed: channel=udp://10.0.0.6:40200 streamId=0 sessionId=2134388779 registrationId=37
+15-Dec-09 10:21:16 n4 FATAL [onyx.messaging.aeron.publication-manager] - Writing to closed publication. java.lang.IllegalStateException: Publication is closed: channel=udp://10.0.0.6:40200 streamId=0 sessionId=2134388781 registrationId=42
+15-Dec-09 10:26:10 n4 FATAL [onyx.messaging.aeron.publication-manager] - Writing to closed publication. java.lang.IllegalStateException: Publication is closed: channel=udp://10.0.0.6:40200 streamId=0 sessionId=2134388783 registrationId=47
+
+
+clojure.lang.ExceptionInfo: Write to BookKeeper ledger failed.
+15-Dec-09 10:12:46 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 10:12:46 n5 WARN [onyx.peer.task-lifecycle] - task-lifecycle: handle-exception
+java.lang.Exception: Plugin crashed. Crash read.
+15-Dec-09 10:12:46 n5 INFO [onyx.log.zookeeper] - P1 java.lang.IllegalStateException: Client is not started
+15-Dec-09 10:14:58 n5 INFO [onyx.messaging.aeron.publication-manager] - Could not close publication: uk.co.real_logic.aeron.exceptions.RegistrationException: Unknown publication: 12
+15-Dec-09 10:14:58 n5 INFO [onyx.messaging.aeron.publication-manager] - Could not close publication: uk.co.real_logic.aeron.exceptions.RegistrationException: Unknown publication: 21
+15-Dec-09 10:24:29 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 10:24:29 n5 WARN [onyx.peer.task-lifecycle] - task-lifecycle: handle-exception
+java.lang.Exception: Plugin crashed. Crash read.
+15-Dec-09 10:26:37 n5 INFO [onyx.messaging.aeron.publication-manager] - Could not close publication: uk.co.real_logic.aeron.exceptions.RegistrationException: Unknown publication: 9
+15-Dec-09 10:26:37 n5 INFO [onyx.messaging.aeron.publication-manager] - Could not close publication: uk.co.real_logic.aeron.exceptions.RegistrationException: Unknown publication: 19
+
+######################################################################
+#####
+### 3 peer per node, never finished. Should've let it timeout so could get dump
+
+All errors like these:
+15-Dec-09 11:38:24 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:38:24 n5 WARN [onyx.peer.task-lifecycle] - task-lifecycle: handle-exception
+java.lang.Exception: Plugin crashed. Crash read.
+15-Dec-09 11:42:15 n5 WARN [onyx.peer.task-lifecycle] - task-lifecycle: handle-exception
+clojure.lang.ExceptionInfo: Write to BookKeeper ledger failed.
+15-Dec-09 11:42:17 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:42:17 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:42:17 n5 WARN [onyx.peer.task-lifecycle] - task-lifecycle: handle-exception
+java.lang.Exception: Plugin crashed. Crash read.
+15-Dec-09 11:42:17 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:42:17 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:46:10 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:46:10 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:46:10 n5 WARN [onyx.peer.task-lifecycle] - task-lifecycle: handle-exception
+java.lang.Exception: Plugin crashed. Crash read.
+15-Dec-09 11:46:25 n5 INFO [onyx.log.zookeeper] - P1 java.lang.IllegalStateException: Client is not started
+15-Dec-09 11:50:05 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:50:05 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:50:05 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:50:05 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:50:05 n5 WARN [onyx.peer.task-lifecycle] - task-lifecycle: handle-exception
+java.lang.Exception: Plugin crashed. Crash read.
+15-Dec-09 11:53:44 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:53:44 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:53:44 n5 WARN [onyx.peer.task-lifecycle] - task-lifecycle: handle-exception
+java.lang.Exception: Plugin crashed. Crash read.
+15-Dec-09 11:53:44 n5 INFO [onyx.log.zookeeper] - P1 java.lang.IllegalStateException: instance must be started before calling this method
+15-Dec-09 11:53:52 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:53:52 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:53:52 n5 WARN [onyx.peer.task-lifecycle] - task-lifecycle: handle-exception
+java.lang.Exception: Plugin crashed. Crash read.
+15-Dec-09 11:53:59 n5 INFO [onyx.log.zookeeper] - P1 java.lang.IllegalStateException: Client is not started
+15-Dec-09 11:54:00 n5 FATAL [onyx.plugin.bookkeeper] - BookKeeper plugin: error reading. org.apache.bookkeeper.client.BKException$ZKException
+15-Dec-09 11:55:46 n5 INFO [onyx.log.zookeeper] - P2 org.apache.curator.CuratorConnectionLossException: KeeperErrorCode = ConnectionLoss
+15-Dec-09 11:55:46 n5 INFO [onyx.peer.virtual-peer] - Read entry: org.apache.curator.CuratorConnectionLossException: KeeperErrorCode = ConnectionLoss
+
+
+######################################################################
+### Killed job!!! Should we handle this in the plugin or just restart? May be a case where we need the "recover from exceptions" feature.
+
+     "clojure.lang.ExceptionInfo: Failed to resolve or build plugin on the classpath, did you require/import the file that contains this plugin? {:symbol :onyx.plugin.bookkeeper/write-ledger, :exception #error {\n :cause nil\n :via\n [{:type org.apache.bookkeeper.client
+.BKException$BKNotEnoughBookiesException\n   :message nil\n   :at [org.apache.bookkeeper.client.BKException create \"BKException.java\" 58]}]\n :trace\n [[org.apache.bookkeeper.client.BKException create \"BKException.java\" 58]\n  [org.apache.bookkeeper.client.BookKeepe
+r createLedger \"BookKeeper.java\" 521]\n  [org.apache.bookkeeper.client.BookKeeper createLedger \"BookKeeper.java\" 487]\n  [onyx.state.log.bookkeeper$create_ledger invoke \"bookkeeper.clj\" 34]\n  [onyx.plugin.bookkeeper$write_ledger invoke \"bookkeeper.clj\" 384]\n  
+[clojure.lang.Var invoke \"Var.java\" 379]\n  [onyx.peer.task_lifecycle$build_pipeline invoke \"task_lifecycle.clj\" 586]\n  [onyx.peer.task_lifecycle.TaskLifeCycle start \"task_lifecycle.clj\" 695]\n  [com.stuartsierra.component$fn__10331$G__10325__10333 invoke \"compo
+nent.cljc\" 5]\n  [com.stuartsierra.component$fn__10331$G__10324__10336 invoke \"component.cljc\" 5]\n  [clojure.lang.Var invoke \"Var.java\" 379]\n  [clojure.lang.AFn applyToHelper \"AFn.java\" 154]\n  [clojure.lang.Var applyTo \"Var.java\" 700]\n  [clojure.core$apply 
+invoke \"core.clj\" 632]\n  [com.stuartsierra.component$try_action invoke \"component.cljc\" 117]\n  [com.stuartsierra.component$update_system$fn__10382 invoke \"component.cljc\" 139]\n  [clojure.lang.ArraySeq reduce \"ArraySeq.java\" 114]\n  [clojure.core$reduce invoke
+ \"core.clj\" 6518]\n  [com.stuartsierra.component$update_system doInvoke \"component.cljc\" 135]\n  [clojure.lang.RestFn invoke \"RestFn.java\" 445]\n  [com.stuartsierra.component$start_system invoke \"component.cljc\" 163]\n  [onyx.system.OnyxTask$fn__17492 invoke \"s
+ystem.clj\" 158]\n  [onyx.system$rethrow_component invoke \"system.clj\" 54]\n  [onyx.system.OnyxTask start \"system.clj\" 157]\n  [onyx.log.commands.common$start_new_lifecycle$fn__11163 invoke \"common.clj\" 139]\n  [clojure.core$binding_conveyor_fn$fn__4444 invoke \"c
+ore.clj\" 1916]\n  [clojure.lang.AFn call \"AFn.java\" 18]\n  [java.util.concurrent.FutureTask run \"FutureTask.java\" 266]\n  [java.util.concurrent.ThreadPoolExecutor runWorker \"ThreadPoolExecutor.java\" 1142]\n  [java.util.concurrent.ThreadPoolExecutor$Worker run \"T
+hreadPoolExecutor.java\" 617]\n  [java.lang.Thread run \"Thread.java\" 745]]}}"},
+
+######################################################################
+###### 20151209T145026.000Z/results.edn
+### Takes a very long time for final read back to occur because of repeated issues like this:
+
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Disconnected from bookie channel [id: 0x8420684d, /10.0.42.1:39770 :> /10.0.0.5:3196]
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Closing the per channel bookie client for 10.0.0.3:3196
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Disconnected from bookie channel [id: 0x82f07641, /10.0.42.1:35774 :> /10.0.0.6:3196]
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Disconnected from bookie channel [id: 0x7c90a840, /10.0.42.1:52716 :> /10.0.0.3:3196]
+INFO  org.apache.zookeeper.ZooKeeper - Session: 0x151875849e7000a closed
+INFO  org.apache.zookeeper.ClientCnxn - EventThread shut down
+INFO  org.apache.zookeeper.ZooKeeper - Initiating client connection, connectString=n1:2181,n2:2181,n3:2181,n4:2181,n5:2181 sessionTimeout=60000 watcher=org.apache.bookkeeper.zookeeper.ZooKeeperWatcherBase@2d89d906
+INFO  org.apache.zookeeper.ClientCnxn - Opening socket connection to server n2/10.0.0.3:2181. Will not attempt to authenticate using SASL (unknown error)
+INFO  org.apache.zookeeper.ClientCnxn - Socket connection established to n2/10.0.0.3:2181, initiating session
+INFO  org.apache.zookeeper.ClientCnxn - Session establishment complete on server n2/10.0.0.3:2181, sessionid = 0x451875bdb900007, negotiated timeout = 40000
+ERROR org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy - Failed to get local host address : 
+java.net.UnknownHostException: d5: d5: unknown error
+        at java.net.InetAddress.getLocalHost(InetAddress.java:1505)
+        at org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy.initialize(RackawareEnsemblePlacementPolicy.java:324)
+        at org.apache.bookkeeper.client.BookKeeper.initializeEnsemblePlacementPolicy(BookKeeper.java:316)
+        at org.apache.bookkeeper.client.BookKeeper.<init>(BookKeeper.java:214)
+        at onyx.state.log.bookkeeper$bookkeeper.invoke(bookkeeper.clj:46)
+        at onyx.state.log.bookkeeper$bookkeeper.invoke(bookkeeper.clj:41)
+        at onyx_jepsen.core$bookkeeper_client.invoke(core.clj:136)
+        at onyx_jepsen.core$read_ledger_entries.invoke(core.clj:139)
+        at clojure.core$mapv$fn__6727.invoke(core.clj:6616)
+        at clojure.lang.PersistentVector.reduce(PersistentVector.java:333)
+        at clojure.core$reduce.invoke(core.clj:6518)
+        at clojure.core$mapv.invoke(core.clj:6616)
+        at onyx_jepsen.core.WriteLogClient$fn__28015.invoke(core.clj:216)
+        at clojure.core$binding_conveyor_fn$fn__4444.invoke(core.clj:1916)
+        at clojure.lang.AFn.call(AFn.java:18)
+        at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+        at java.lang.Thread.run(Thread.java:745)
+Caused by: java.net.UnknownHostException: d5: unknown error
+        at java.net.Inet6AddressImpl.lookupAllHostAddr(Native Method)
+        at java.net.InetAddress$2.lookupAllHostAddr(InetAddress.java:928)
+        at java.net.InetAddress.getAddressesFromNameService(InetAddress.java:1323)
+        at java.net.InetAddress.getLocalHost(InetAddress.java:1500)
+        ... 18 more
+INFO  org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy - Initialize rackaware ensemble placement policy @ null : org.apache.bookkeeper.net.ScriptBasedMapping.
+INFO  org.apache.bookkeeper.net.NetworkTopology - Adding a new node: /default-rack/10.0.0.5:3196
+INFO  org.apache.bookkeeper.net.NetworkTopology - Adding a new node: /default-rack/10.0.0.6:3196
+INFO  org.apache.bookkeeper.net.NetworkTopology - Adding a new node: /default-rack/10.0.0.3:3196
+INFO  org.apache.bookkeeper.net.NetworkTopology - Adding a new node: /default-rack/10.0.0.2:3196
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Successfully connected to bookie: [id: 0x5838e625, /10.0.42.1:52721 => /10.0.0.3:3196]
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Successfully connected to bookie: [id: 0xca3faf59, /10.0.42.1:35779 => /10.0.0.6:3196]
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Successfully connected to bookie: [id: 0xe327d329, /10.0.42.1:39772 => /10.0.0.5:3196]
+ERROR org.apache.bookkeeper.client.PendingReadOp - Read of ledger entry failed: L35 E2048-E2048, Heard from []. First unread entry is 2048
+INFO  onyx-jepsen.core - last confirmed  2047  ledger-id  35
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Closing the per channel bookie client for 10.0.0.5:3196
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Closing the per channel bookie client for 10.0.0.6:3196
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Disconnected from bookie channel [id: 0xe327d329, /10.0.42.1:39772 :> /10.0.0.5:3196]
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Closing the per channel bookie client for 10.0.0.3:3196
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Disconnected from bookie channel [id: 0xca3faf59, /10.0.42.1:35779 :> /10.0.0.6:3196]
+INFO  org.apache.bookkeeper.proto.PerChannelBookieClient - Disconnected from bookie channel [id: 0x5838e625, /10.0.42.1:52721 :> /10.0.0.3:3196]
+INFO  org.apache.zookeeper.ZooKeeper - Session: 0x451875bdb900007 closed
+INFO  org.apache.zookeeper.ClientCnxn - EventThread shut down
+INFO  org.apache.zookeeper.ZooKeeper - Initiating client connection, connectString=n1:2181,n2:2181,n3:2181,n4:2181,n5:2181 sessionTimeout=60000 watcher=org.apache.bookkeeper.zookeeper.ZooKeeperWatcherBase@7f88f32
+INFO  org.apache.zookeeper.ClientCnxn - Opening socket connection to server n2/10.0.0.3:2181. Will not attempt to authenticate using SASL (unknown error)
+INFO  org.apache.zookeeper.ClientCnxn - Socket connection established to n2/10.0.0.3:2181, initiating session
+INFO  org.apache.zookeeper.ClientCnxn - Session establishment complete on server n2/10.0.0.3:2181, sessionid = 0x451875bdb900008, negotiated timeout = 40000
+
+Eventually killed job:
+
+   {:fn :kill-job,
+    :args
+    {:job #uuid "9456a948-75a0-473a-915c-223218b3a529",
+     :e
+     "clojure.lang.ExceptionInfo: Failed to resolve or build plugin on the classpath, did you require/import the file that contains this plugin? {:symbol :onyx.plugin.bookkeeper/write-ledger, :exception #error {\n :cause nil\n :via\n [{:type org.apache.bookkeeper.client
+.BKException$BKNotEnoughBookiesException\n   :message nil\n   :at [org.apache.bookkeeper.client.BKException create \"BKException.java\" 58]}]\n :trace\n [[org.apache.bookkeeper.client.BKException create \"BKException.java\" 58]\n  [org.apache.bookkeeper.client.BookKeepe
+r createLedger \"BookKeeper.java\" 521]\n  [org.apache.bookkeeper.client.BookKeeper createLedger \"BookKeeper.java\" 487]\n  [onyx.state.log.bookkeeper$create_ledger invoke \"bookkeeper.clj\" 34]\n  [onyx.plugin.bookkeeper$write_ledger invoke \"bookkeeper.clj\" 384]\n  
+[clojure.lang.Var invoke \"Var.java\" 379]\n  [onyx.peer.task_lifecycle$build_pipeline invoke \"task_lifecycle.clj\" 586]\n  [onyx.peer.task_lifecycle.TaskLifeCycle start \"task_lifecycle.clj\" 695]\n  [com.stuartsierra.component$fn__10331$G__10325__10333 invoke \"compo
+nent.cljc\" 5]\n  [com.stuartsierra.component$fn__10331$G__10324__10336 invoke \"component.cljc\" 5]\n  [clojure.lang.Var invoke \"Var.java\" 379]\n  [clojure.lang.AFn applyToHelper \"AFn.java\" 154]\n  [clojure.lang.Var applyTo \"Var.java\" 700]\n  [clojure.core$apply 
+invoke \"core.clj\" 632]\n  [com.stuartsierra.component$try_action invoke \"component.cljc\" 117]\n  [com.stuartsierra.component$update_system$fn__10382 invoke \"component.cljc\" 139]\n  [clojure.lang.ArraySeq reduce \"ArraySeq.java\" 114]\n  [clojure.core$reduce invoke
+ \"core.clj\" 6518]\n  [com.stuartsierra.component$update_system doInvoke \"component.cljc\" 135]\n  [clojure.lang.RestFn invoke \"RestFn.java\" 445]\n  [com.stuartsierra.component$start_system invoke \"component.cljc\" 163]\n  [onyx.system.OnyxTask$fn__17492 invoke \"s
+ystem.clj\" 158]\n  [onyx.system$rethrow_component invoke \"system.clj\" 54]\n  [onyx.system.OnyxTask start \"system.clj\" 157]\n  [onyx.log.commands.common$start_new_lifecycle$fn__11163 invoke \"common.clj\" 139]\n  [clojure.core$binding_conveyor_fn$fn__4444 invoke \"c
+ore.clj\" 1916]\n  [clojure.lang.AFn call \"AFn.java\" 18]\n  [java.util.concurrent.FutureTask run \"FutureTask.java\" 266]\n  [java.util.concurrent.ThreadPoolExecutor runWorker \"ThreadPoolExecutor.java\" 1142]\n  [java.util.concurrent.ThreadPoolExecutor$Worker run \"T
+hreadPoolExecutor.java\" 617]\n  [java.lang.Thread run \"Thread.java\" 745]]}}"},
+
+
+
+######################################################################
+#### 20151209T193750.000Z
+### Job never finishes, but doesn't die
+
+RESOLUTION: was not closing ledger handles before await. Plugin also checked ledger closing too frequently which made it take longer.
+
+One case of closed pub 
+15-Dec-09 20:17:45 n4 FATAL [onyx.messaging.aeron.publication-manager] - Writing to closed publication. java.lang.IllegalStateException: Publication is closed: channel=udp://10.0.0.6:40200 streamId=0 sessionId=282844539 registrationId=118
+
+Job never finished.
+
+Some peers left and never come back though. Should play back log and check whether replica shows 15 peers
+
+Multiple exhaust inputs:
+
+{:fn :exhaust-input, :args {:job #uuid "baa4aeee-745b-4dc7-a07b-c09e2cd5aaab", :task #uuid "01e629ce-2878-4d8b-866f-43793ec4eaa4"}, :message-id 1001, :created-at 1449692147515} {:fn :exhaust-input, :args {:job #uuid "baa4aeee-745b-4dc7-a07b-c09e2cd5aaab", :task #uuid "01e629ce-2878-4d8b-866f-43793ec4eaa4"}, :message-id 1002, :created-at 1449692157251} {:fn :accept-join-cluster, :args {:observer #uuid "43d874c8-5814-44ba-94ea-184b3dd694fa", :subject #uuid "ece6f770-4e5f-431b-8dd8-0e9c2915366f", :accepted-observer #uuid "05bc7e29-5493-4ec0-b29d-73c28c1a5287", :accepted-joiner #uuid "43d874c8-5814-44ba-94ea-184b3dd694fa"}, :message-id 1003, :created-at 1449692159495} {:fn :accept-join-cluster, :args {:observer #uuid "9b074d4b-239c-44f2-ae7c-f2ed931949ab", :subject #uuid "ea39b747-fc39-42d4-ae8a-918e0b47dec9", :accepted-observer #uuid "f8cfce91-f783-4fdc-9978-aa9664b0f6fd", :accepted-joiner #uuid "9b074d4b-239c-44f2-ae7c-f2ed931949ab"}, :message-id 1004, :created-at 1449692159505} {:fn :signal-ready, :args {:id #uuid "43d874c8-5814-44ba-94ea-184b3dd694fa"}, :message-id 1005, :created-at 1449692159606} {:fn :signal-ready, :args {:id #uuid "9b074d4b-239c-44f2-ae7c-f2ed931949ab"}, :message-id 1006, :created-at 1449692159760} {:fn :accept-join-cluster, :args {:observer #uuid "8e7c9ec1-656e-442d-b67e-92912262f3fa", :subject #uuid "05bc7e29-5493-4ec0-b29d-73c28c1a5287", :accepted-observer #uuid "ea39b747-fc39-42d4-ae8a-918e0b47dec9", :accepted-joiner #uuid "8e7c9ec1-656e-442d-b67e-92912262f3fa"}, :message-id 1007, :created-at 1449692159918} {:fn :signal-ready, :args {:id #uuid "8e7c9ec1-656e-442d-b67e-92912262f3fa"}, :message-id 1008, :created-at 1449692159993} {:fn :accept-join-cluster, :args {:observer #uuid "7ecf8917-ac0b-45d5-9e30-1ef136e79f99", :subject #uuid "16e6dc77-a7dd-4c5e-bf8b-0be7c5a07363", :accepted-observer #uuid "32b253a0-a868-4930-9f4c-e2274ac51759", :accepted-joiner #uuid "7ecf8917-ac0b-45d5-9e30-1ef136e79f99"}, :message-id 1009, :created-at 1449692162927} {:fn :accept-join-cluster, :args {:observer #uuid "04669833-c834-4976-a050-9b3f80a63765", :subject #uuid "e61e1dfe-b25b-48b4-b2c8-a43c6029cf12", :accepted-observer #uuid "16e6dc77-a7dd-4c5e-bf8b-0be7c5a07363", :accepted-joiner #uuid "04669833-c834-4976-a050-9b3f80a63765"}, :message-id 1010, :created-at 1449692163136} {:fn :signal-ready, :args {:id #uuid "04669833-c834-4976-a050-9b3f80a63765"}, :message-id 1011, :created-at 1449692163226} {:fn :accept-join-cluster, :args {:observer #uuid "82a5008f-d47d-4a6f-9a25-1e711be1ecbc", :subject #uuid "dc748963-c134-4356-9ceb-e51a0bd7ebbd", :accepted-observer #uuid "07b3553d-a8be-46d7-b103-8c2d38ea246e", :accepted-joiner #uuid "82a5008f-d47d-4a6f-9a25-1e711be1ecbc"}, :message-id 1012, :created-at 1449692163369} {:fn :signal-ready, :args {:id #uuid "82a5008f-d47d-4a6f-9a25-1e711be1ecbc"}, :message-id 1013, :created-at 1449692163530} {:fn :signal-ready, :args {:id #uuid "7ecf8917-ac0b-45d5-9e30-1ef136e79f99"}, :message-id 1014, :created-at 1449692163565} {:fn :exhaust-input, :args {:job #uuid "baa4aeee-745b-4dc7-a07b-c09e2cd5aaab", :task #uuid "01e629ce-2878-4d8b-866f-43793ec4eaa4"}, :message-id 1015, :created-at 1449692166664} {:fn :exhaust-input, :args {:job #uuid "baa4aeee-745b-4dc7-a07b-c09e2cd5aaab", :task #uuid "333e9896-2bd4-48c7-9170-ea7f80994c62"}, :message-id 1016, :created-at 1449692166750} {:fn :exhaust-input, :args {:job #uuid "baa4aeee-745b-4dc7-a07b-c09e2cd5aaab", :task #uuid "333e9896-2bd4-48c7-9170-ea7f80994c62"}, :message-id 1017, :created-at 1449692176411} {:fn :exhaust-input, :args {:job #uuid "baa4aeee-745b-4dc7-a07b-c09e2cd5aaab", :task #uuid "01e629ce-2878-4d8b-866f-43793ec4eaa4"}, :message-id 1018, :created-at 1449692176835} {:fn :exhaust-input, :args {:job #uuid "baa4aeee-745b-4dc7-a07b-c09e2cd5aaab", :task #uuid "333e9896-2bd4-48c7-9170-ea7f80994c62"}, :message-id 1019, :created-at 1449692185447} {:fn :exhaust-input, :args {:job #uuid "baa4aeee-745b-4dc7-a07b-c09e2cd5aaab", :task #uuid "16c49b7c-b312-4022-ae55-09ff230e4afc"}, :message-id 1020, :created-at 1449692185996} {:fn :exhaust-input, :args {:job #uuid "baa4aeee-745b-4dc7-a07b-c09e2cd5aaab", :task #uuid "4b67bafa-a128-4067-b3ef-68a0079e8ed7"}, :message-id 1021, :created-at 1449692186138} {:fn :exhaust-input, :args {:job #uuid "baa4aeee-745b-4dc7-a07b-c09e2cd5aaab", :task #uuid "01e629ce-2878-4d8b-866f-43793ec4eaa4"}, :message-id 1022, :created-at 1449692186837} 
+
+{:fn :leave-cluster, :args {:id #uuid "ea39b747-fc39-42d4-ae8a-918e0b47dec9"}, :message-id 1023, :created-at 1449692188002} {:fn :leave-cluster, :args {:id #uuid "ea39b747-fc39-42d4-ae8a-918e0b47dec9"}, :message-id 1024
+, :created-at 1449692188003} {:fn :leave-cluster, :args {:id #uuid "ece6f770-4e5f-431b-8dd8-0e9c2915366f"}, :message-id 1025, :created-at 1449692188019} {:fn :leave-cluster, :args {:id #uuid "f8cfce91-f783-4fdc-9978-aa9664b0f6fd"}, :message-id 1026, :created-at 1449692190002}]
+
+
+######################################################################
+#### 20151210T155404.000Z
+### Frequent GCs, can't read log back
+
+STATUS: UNRESOLVED
+
+Problems logging out afterwards. Maybe due to some resource / handle issue?
+
+Maybe due to gcs not actually closing threads/go loops?
+
+######################################################################
+#### 20151210T184353.000Z
+### Infrequent GCs, not all peers come back up
+
+Log playback shows wrong number of peers. Maybe re-reading while GC takes place?
+
+######################################################################
+#### 20151210T190711.000Z
+### Some missing reads, not all peers came back up
+
+Missing reads seem to be on the tail of the ledger. Maybe a problem transitioning to closed ledger? Never seems to have closed ledger either.
+
+Peers appear to have stopped coming back up. Job never completed AFAICT.
+
+Theory, threads aren't being cleaned up, eventually enough restarts cause exceptions e.g. concurrent cancellation exception.
+
+component/start
+    data: {:reason :com.stuartsierra.component/component-function-threw-exception, :function #'com.stuartsierra.component/start, :sys
+tem-key :log, :component #onyx.log.zookeeper.ZooKeeper{:config {:zookeeper/address "n1:2181,n2:2181,n3:2181,n4:2181,n5:2181", :onyx.p
+eer/job-scheduler :onyx.job-scheduler/greedy, :onyx.messaging/impl :aeron, :onyx/id "JEPSENONYXID", :onyx.messaging/bind-addr "10.0.0
+.3", :onyx.messaging/peer-port 40200, :onyx.messaging.aeron/embedded-driver? true}, :monitoring #onyx.monitoring.no_op_monitoring.NoO
+pMonitoringAgent{}, :server nil, :conn #object[org.apache.curator.framework.imps.CuratorFrameworkImpl 0x624cc085 "org.apache.curator.
+framework.imps.CuratorFrameworkImpl@624cc085"], :prefix "JEPSENONYXID"}, :system #onyx.system.OnyxPeer{:monitoring #onyx.monitoring.n
+o_op_monitoring.NoOpMonitoringAgent{}, :messaging-require :loaded, :log #onyx.log.zookeeper.ZooKeeper{:config {:zookeeper/address "n1
+:2181,n2:2181,n3:2181,n4:2181,n5:2181", :onyx.peer/job-scheduler :onyx.job-scheduler/greedy, :onyx.messaging/impl :aeron, :onyx/id "J
+EPSENONYXID", :onyx.messaging/bind-addr "10.0.0.3", :onyx.messaging/peer-port 40200, :onyx.messaging.aeron/embedded-driver? true}, :m
+onitoring #onyx.monitoring.no_op_monitoring.NoOpMonitoringAgent{}, :server nil, :conn #object[org.apache.curator.framework.imps.Curat
+orFrameworkImpl 0x624cc085 "org.apache.curator.framework.imps.CuratorFrameworkImpl@624cc085"], :prefix "JEPSENONYXID"}, :acking-daemo
+n #onyx.messaging.acking_daemon.AckingDaemon{:opts {:zookeeper/address "n1:2181,n2:2181,n3:2181,n4:2181,n5:2181", :onyx.peer/job-sche
+duler :onyx.job-scheduler/greedy, :onyx.messaging/impl :aeron, :onyx/id "JEPSENONYXID", :onyx.messaging/bind-addr "10.0.0.3", :onyx.m
+essaging/peer-port 40200, :onyx.messaging.aeron/embedded-driver? true}, :ack-state #object[clojure.lang.Atom 0x32318510 {:status :rea
+dy, :val #onyx.messaging.acking_daemon.AckState{:state {}, :completed? true}}], :acking-ch #object[clojure.core.async.impl.channels.M
+anyToManyChannel 0x790e6450 "clojure.core.async.impl.channels.ManyToManyChannel@790e6450"], :completion-ch #object[clojure.core.async
+.impl.channels.ManyToManyChannel 0x1dd870f3 "clojure.core.async.impl.channels.ManyToManyChannel@1dd870f3"], :timeout-ch nil, :monitor
+ing #onyx.monitoring.no_op_monitoring.NoOpMonitoringAgent{}, :log #onyx.log.zookeeper.ZooKeeper{:config {:zookeeper/address "n1:2181,
+n2:2181,n3:2181,n4:2181,n5:2181", :onyx.peer/job-scheduler :onyx.job-scheduler/greedy, :onyx.messaging/impl :aeron, :onyx/id "JEPSENO
+NYXID", :onyx.messaging/bind-addr "10.0.0.3", :onyx.messaging/peer-port 40200, :onyx.messaging.aeron/embedded-driver? true}, :monitor
+ing #onyx.monitoring.no_op_monitoring.NoOpMonitoringAgent{}, :server nil, :conn #object[org.apache.curator.framework.imps.CuratorFram
+eworkImpl 0x624cc085 "org.apache.curator.framework.imps.CuratorFrameworkImpl@624cc085"], :prefix "JEPSENONYXID"}, :ack-segments-fut #
+object[clojure.core$future_call$reify__6736 0x54abc3bd {:status :ready, :val nil}], :timeout-fut #object[clojure.core$future_call$rei
+fy__6736 0x7c572855 {:status :failed, :val #error {
+           [{:type java.util.concurrent.CancellationException
+            [io.aviso.exception$format_property_value invoke "exception.clj" 349]
+            [io.aviso.exception$write_exception$write_exception_stack__6514 invoke "exception.clj" 435]
+            [io.aviso.exception$write_exception invoke "exception.clj" 442]
+            [io.aviso.exception$format_exception invoke "exception.clj" 451]
+            [io.aviso.exception$format_exception invoke "exception.clj" 449]
+           [{:type java.util.concurrent.CancellationException
+            [io.aviso.exception$format_property_value invoke "exception.clj" 349]
+            [io.aviso.exception$write_exception$write_exception_stack__6514 invoke "exception.clj" 435]
+            [io.aviso.exception$write_exception invoke "exception.clj" 442]
+            [io.aviso.exception$format_exception invoke "exception.clj" 451]
+            [io.aviso.exception$format_exception invoke "exception.clj" 449]
+           [{:type java.util.concurrent.CancellationException
+            [io.aviso.exception$format_property_value invoke "exception.clj" 349]
+            [io.aviso.exception$write_exception$write_exception_stack__6514 invoke "exception.clj" 435]
+            [io.aviso.exception$write_exception invoke "exception.clj" 442]
+            [io.aviso.exception$format_exception invoke "exception.clj" 451]
+            [io.aviso.exception$format_exception invoke "exception.clj" 449]
+           [{:type java.util.concurrent.CancellationException
+            [io.aviso.exception$format_property_value invoke "exception.clj" 349]
+            [io.aviso.exception$write_exception$write_exception_stack__6514 invoke "exception.clj" 435]
+            [io.aviso.exception$write_exception invoke "exception.clj" 442]
+            [io.aviso.exception$format_exception invoke "exception.clj" 451]
+            [io.aviso.exception$format_exception invoke "exception.clj" 449]
+15-Dec-10 20:20:42 n2 FATAL [onyx.api] - Peer lifecycle threw an exception
+
+######################################################################
+#### 20151210T210721.000Z
+### Not all peers came back up in long running job
+
+######################################################################
+#### 20151210T190711.000Z
+### Not all peers came back up in long running job
+
+CancellationException
