@@ -337,3 +337,24 @@ fy__6736 0x7c572855 {:status :failed, :val #error {
 ### Not all peers came back up in long running job
 
 CancellationException
+
+
+######################################################################
+#### 20151217T105400.000Z
+### 2000 exhaust inputs, peers never come back up
+
+Peers never get their join messages into the log? Maybe because they never get read? Not sure? They seem to get started.
+
+######################################################################
+#### 20151217T134156.000Z
+### Job killed close to the end.
+
+######################################################################
+#### 20151217T194810.000Z
+### Failure detector seems to go awry
+
+Zillions of aborts and joins. One abort has nil peer-id
+
+######################################################################
+#### 20151218T080642.000Z
+### Success for 4000s after removing failure detector!Failure detector seems to go awry
