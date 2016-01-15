@@ -53,6 +53,25 @@ Uses peers with the following configuration to avoid resource starvation running
 
 See script/run-peers.sh for settings.
 
+## Jepsen Memorial Box
+
+A memorial to those bugs destroyed by Jepsen, or at large, so far:
+
+BookKeeper:
+
+* [Document that BookKeeper servers will shutdown on losing quorum](https://issues.apache.org/jira/browse/BOOKKEEPER-882) Unresolved.
+
+onyx:
+
+* [Peer join race condition #453](https://github.com/onyx-platform/onyx/issues/453) Resolved.
+* [Peers that crash on component/start will not reboot #437] (https://github.com/onyx-platform/onyx/issues/437) Resolved. 
+* [Ensure peer restarts after ZooKeeper connection loss/errors #423] (https://github.com/onyx-platform/onyx/issues/423) Resolved.
+
+onyx-bookkeeper plugin:
+* [Handle case where peer is restored, but all messages fully acked #4] (https://github.com/onyx-platform/onyx-bookkeeper/issues/4) Unresolved, low priority.
+* [Plugin should wait until producer channel has completely finished #3] (https://github.com/onyx-platform/onyx-bookkeeper/issues/3) Unresolved.
+* [Plugins using producer threads must be able to pass exceptions back to task #435](https://github.com/onyx-platform/onyx/issues/435) Resolved in BookKeeper, likely present in onyx-datomic, onyx-seq, onyx-kafka.
+
 ## License
 
 Copyright © 2015 FIXME
