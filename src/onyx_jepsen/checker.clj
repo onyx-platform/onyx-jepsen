@@ -11,11 +11,12 @@
 
 (defn read-peer-log [log]
   (let [ch (chan 1000)
-        timeout-ms 1000] 
+        timeout-ms 20000] 
     (onyx.extensions/subscribe-to-log log ch)
     (loop [entries []]
       (if-let [entry (first (alts!! [ch (casync/timeout timeout-ms)]))]
-        (recur (conj entries entry))
+        (do (info "Read " entry)
+            (recur (conj entries entry)))
         entries))))
 
 (defn base-replica [peer-config]
