@@ -1,8 +1,13 @@
 (ns onyx-jepsen.checker
   (:require [onyx.extensions]
             [jepsen [checker :as checker]]
+            [onyx.system :as system]
+            [onyx.log.zookeeper]
+            [onyx.log.curator]
+            [com.stuartsierra.component :as component]
             [onyx.log.replica :as replica]
-            [clojure.core.async :as casync :refer [chan >!! <!! close! alts!!]]))
+            [clojure.core.async :as casync :refer [chan >!! <!! close! alts!!]]
+            [clojure.tools.logging :refer :all]))
 
 (defn read-peer-log [log]
   (let [ch (chan 1000)
