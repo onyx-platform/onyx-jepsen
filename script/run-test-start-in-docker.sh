@@ -7,9 +7,11 @@ hostname d1 && \
 	cd /onyx-jepsen/ && \
 	lein test |& tee test-output.log
 
+cp test-output.log store/latest/
+
 for i in n1 n2 n3 n4 n5; 
 do 
 	scp $i:/onyx.log store/latest/onyx-$i.log; 
+	scp $i:/myrecording.jfr store/latest/recording-$i.jfr; 
+	scp $i:/peers-out.log store/latest/peers-out-$i.log; 
 done
-
-cp test-output.log store/latest/
