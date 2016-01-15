@@ -4,8 +4,8 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.onyxplatform/onyx "0.8.4-SNAPSHOT" :exclusions [org.slf4j/slf4j-nop]]
-                 [org.onyxplatform/onyx-bookkeeper "0.8.4.0-SNAPSHOT"]]
+                 [org.onyxplatform/onyx "0.8.5-SNAPSHOT" :exclusions [org.slf4j/slf4j-nop]]
+                 [org.onyxplatform/onyx-bookkeeper "0.8.5.1-SNAPSHOT"]]
   :jvm-opts ^:replace ["-server"]
   :profiles {:uberjar {:aot [onyx-peers.launcher.aeron-media-driver
                              onyx-peers.launcher.launch-prod-peers]}
