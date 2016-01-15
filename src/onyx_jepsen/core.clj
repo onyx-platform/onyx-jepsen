@@ -155,10 +155,23 @@
 (defn get-written-ledgers [onyx-client job-data onyx-id]
   (onyx.plugin.bookkeeper/read-ledgers-data (:log onyx-client) 
                                             onyx-id 
-                                            (:job-id @job-data)
-                                            (get-in @job-data [:task-ids :persist :id])))
+                                            (:job-id job-data)
+                                            (get-in job-data [:task-ids :persist :id])))
 
-(defrecord WriteLogClient [client job-data ledger-handles ledger-handle ledger-ids onyx-client]
+
+(defn close-ledger-handles [ledger-handles]
+  (mapv (fn [h] 
+          (try (.close h)
+               (catch Throwable t
+                 (info "Error closing handle" t)))) 
+        ledger-handles))
+
+(defn await-jobs-completions [peer-config jobs-data]
+  (mapv (fn [job-data]
+          (onyx.api/await-job-completion peer-config (:job-id job-data)))
+        jobs-data)) 
+
+(defrecord WriteLogClient [client jobs-data ledger-handles ledger-handle ledger-ids onyx-client]
   client/Client
   (setup! [this test node]
     (let [client (bookkeeper-client)
@@ -172,7 +185,7 @@
     (let [zk-addr (:zookeeper/address env-config)
           onyx-id (:onyx/id env-config)] 
       (case (:f op)
-        :read-peer-log (timeout 4000
+        :read-peer-log (timeout 1000000
                                 (assoc op :type :info :value :timed-out)
                                 (try
                                   (assoc op 
@@ -185,13 +198,9 @@
                                                  (try
                                                    (assoc op 
                                                           :type :ok 
-                                                          :value (do
-                                                                   (mapv (fn [h] 
-                                                                           (try (.close h)
-                                                                                (catch Throwable t
-                                                                                  (info "Error closing handle" t)))) 
-                                                                         @ledger-handles)
-                                                                   (onyx.api/await-job-completion peer-config (:job-id @job-data))))
+                                                          :value (do (close-ledger-handles @ledger-handles)
+                                                                     (await-jobs-completions peer-config @jobs-data)
+                                                                     nil))
                                                    (catch Throwable t
                                                      (assoc op :type :info :value t))))
         :read-ledgers (timeout 1000000
@@ -199,7 +208,11 @@
                                (try
                                  (assoc op 
                                         :type :ok 
-                                        :value (mapv read-ledger-entries (get-written-ledgers onyx-client job-data onyx-id)))
+                                        ;; FIXME: mapcatting everything together for now
+                                        :value (mapv read-ledger-entries 
+                                                     (mapcat (fn [job-data] 
+                                                               (get-written-ledgers onyx-client job-data onyx-id))
+                                                             @jobs-data)))
                                  (catch Throwable t
                                    (assoc op :type :info :value t))))
 
@@ -217,12 +230,17 @@
                              (try
                                (assoc op
                                       :type :ok
-                                      :value (->> (simple-job/build-job 1 
-                                                                        zk-addr
-                                                                        (onyx.log.zookeeper/ledgers-path onyx-id)
-                                                                        @ledger-ids)
-                                                  (onyx.api/submit-job peer-config)
-                                                  (reset! job-data)))
+                                      :value (let [ledgers (nth (partition-all (/ (count @ledger-ids) 
+                                                                                  (:n-jobs op)) 
+                                                                               @ledger-ids)
+                                                                (:job-num op))
+                                                   job-data (->> (simple-job/build-job (:params op) 
+                                                                                       zk-addr
+                                                                                       (onyx.log.zookeeper/ledgers-path onyx-id)
+                                                                                       ledgers)
+                                                                 (onyx.api/submit-job peer-config))]
+                                               (swap! jobs-data conj job-data)
+                                               job-data))
                                (catch Throwable t
                                  (assoc op :type :info :value t)))) 
 
@@ -238,8 +256,8 @@
   (teardown! [_ test]
     (.close client)))
 
-(defn write-log-client [job-data ledger-handles ledger-ids]
-  (->WriteLogClient nil job-data ledger-handles nil ledger-ids nil))
+(defn write-log-client [jobs-data ledger-handles ledger-ids]
+  (->WriteLogClient nil jobs-data ledger-handles nil ledger-ids nil))
 
 ;; Not actually used for anything currently
 (defrecord OnyxModel []
@@ -274,6 +292,16 @@
   []
   (gen/clients (gen/once {:type :invoke :f :close-ledgers-await-completion})))
 
+(defn submit-job-gen [n-jobs]
+  (->> (range n-jobs)
+       (map (fn [n] 
+              {:type :invoke 
+               :f :submit-job 
+               :job-num n
+               :n-jobs n-jobs
+               :params {:batch-size 1}}))
+       gen/seq))
+
 (def os
   (reify os/OS
     (setup! [_ test node]
@@ -286,34 +314,43 @@
 (defn basic-test
   "A simple test of Onyx's safety."
   [version]
-  (merge tests/noop-test
-         {:os os
-          :db (setup version)
-          :client (write-log-client (atom nil) (atom []) (atom []))
-          :model (->OnyxModel) ;; Not actually used for anything currently
-          :checker (onyx-checker/->Checker peer-config (:n-peers peer-setup))
-          :generator (gen/phases
-                       (->> (onyx-gen/filter-new identity 
-                                                 (onyx-gen/frequency [(adds) 
-                                                                      ;(gen/once (gc-peer-logs))
-                                                                      (gen/once 
-                                                                        (gen/each 
-                                                                          {:type :invoke :f :submit-job}))]
-                                                                     [0.98
-                                                                      ;0.01
-                                                                      0.01]))
-                            (gen/stagger 1/10)
-                            ;(gen/delay 1)
-                            (gen/nemesis
-                              (gen/seq (cycle
-                                         [(gen/sleep 30)
-                                          {:type :info :f :start}
-                                          (gen/sleep 200)
-                                          {:type :info :f :stop}])))
-                            (gen/time-limit 4000)) 
-                       (close-await-completion-gen)
-                       (read-ledgers-gen)
-                       (read-peer-log-gen))
-          ;:nemesis (nemesis/partitioner (comp nemesis/bridge shuffle))
-          :nemesis (nemesis/partition-random-halves)
-          }))
+  ;; TODO, have map with test parameters in edn
+  (let [n-jobs 1] 
+    (merge tests/noop-test
+           {:os os
+            :db (setup version)
+            :client (write-log-client (atom []) (atom []) (atom []))
+            :model (->OnyxModel) ;; Currently not actually used for anything
+            :checker (onyx-checker/->Checker peer-config (:n-peers peer-setup))
+            :generator (gen/phases
+                         (->> (onyx-gen/filter-new identity 
+                                                   (onyx-gen/frequency [(adds) 
+                                                                        (submit-job-gen n-jobs)
+                                                                        ;(gen/once (gc-peer-logs))
+                                                                        ]
+                                                                       [0.98
+                                                                        ;0.01
+                                                                        0.01]))
+                              (gen/stagger 1/10)
+                              ;(gen/delay 1)
+                              (gen/nemesis
+                                (gen/seq (cycle
+                                           [(gen/sleep 30)
+                                            {:type :info :f :start}
+                                            (gen/sleep 200)
+                                            {:type :info :f :stop}])))
+                              (gen/time-limit 14000)) 
+
+                         ;; Bring everything back at the end
+                         ;; This way we can test that the peers came back up
+                         (gen/nemesis (gen/once {:type :info :f :stop}))
+                         ;; Sleep for a while to give peers a chance to come back up
+                         ;; Should be enough time that curator backoff * max-retries is covered
+                         (gen/sleep 120)
+
+                         (close-await-completion-gen)
+                         (read-ledgers-gen)
+                         (read-peer-log-gen))
+            ;:nemesis (nemesis/partitioner (comp nemesis/bridge shuffle))
+            :nemesis (nemesis/partition-random-halves)
+            })))
