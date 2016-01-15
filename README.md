@@ -2,43 +2,44 @@
 
 Jepsen testing Onyx. **Work in progress**
 
+## Usage
+
 To run:
 
-1. Setup docker machine:
+1. If not using Linux, setup docker machine:
+
+Tune disk size, memory size and cpu counts to taste.
+
+VMware fusion instructions:
 ```
-DO SOMETHING
+docker-machine create --driver vmwarefusion --vmwarefusion-disk-size 50000 --vmwarefusion-memory-size 20000 --vmwarefusion-cpu-count "6" jepsen-onyx
 ```
 
-2. Start docker in docker instance:
+Virtualbox instructions:
 ```
-./scripts/start.sh uberjar
+docker-machine create --driver virtualbox --virtualbox-disk-size 50000 --virtualbox-memory 20000 jepsen-onyx
+```
+
+2. Set docker-machine env:
+```
+eval "$(docker-machine env jepsen-onyx)"
+```
+
+2. Uberjar peers and start docker in docker instance:
+```
+scripts/start.sh uberjar
 ```
 
 3. Run from inside docker in docker.
 ```
-./run thing
+script/run-test-start-in-docker.sh
 ```
-
-```
- for i in "n1 n2 n3 n4 n5"; do scp $i:/onyx.log 
-```
-
-Discoveries thus far:
-
-* BookKeeper intentionally suicides after a ZooKeeper connection timeout.
-Therefore it needs to be monitored so that the server comes back up after a
-partition.
-* Fix for written but *not* acknowledged?
 
 ## Notes
 
 Uses peers with the following configuration to avoid resource starvation running on a single machine:
 
 -D"aeron.client.liveness.timeout=50000000000" -D"aeron.threading.mode=SHARED" -server -XX:+UseG1GC 
-
-## Usage
-
-FIXME
 
 ## License
 
