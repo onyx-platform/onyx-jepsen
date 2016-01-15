@@ -15,7 +15,7 @@ VMware fusion instructions:
 docker-machine create --driver vmwarefusion --vmwarefusion-disk-size 50000 --vmwarefusion-memory-size 20000 --vmwarefusion-cpu-count "6" jepsen-onyx
 ```
 
-Virtualbox instructions:
+Virtualbox instructions (untested, must support file sharing):
 ```
 docker-machine create --driver virtualbox --virtualbox-disk-size 50000 --virtualbox-memory 20000 jepsen-onyx
 ```
@@ -27,7 +27,7 @@ eval "$(docker-machine env jepsen-onyx)"
 
 2. Uberjar peers and start docker in docker instance:
 ```
-scripts/start.sh uberjar
+scripts/start-containers.sh uberjar
 ```
 
 3. Run from inside docker in docker.
