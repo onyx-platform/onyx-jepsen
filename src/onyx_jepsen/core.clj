@@ -50,9 +50,14 @@
 (def peer-config 
   (-> "onyx-peers/resources/prod-peer-config.edn" slurp read-string))
 
-(def peer-setup 
-  ; Minimum 5 (input ledgers) + 1 intermediate + 1 output
-  {:n-peers 3})
+(def test-setup 
+  {:job-params {:batch-size 1}
+   :nemesis :random-halves ; :bridge-shuffle or :random-halves
+   :time-limit 4000
+   ; may or may not work when 5 is not divisible by n-jobs
+   :n-jobs 1
+   ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
+   :n-peers 3})
 
 (defn zk-node-ids
   "We number nodes in reverse order so the leader is the first node. Returns a
@@ -103,7 +108,7 @@
         (c/exec :service :zookeeper :restart)
 
         (info node "Running peers")
-        (c/exec "/run-peers.sh" (:n-peers peer-setup))
+        (c/exec "/run-peers.sh" (:n-peers test-setup))
         ;; Sleep here shouldn't really be necessary, but clients are connecting
         ;; to ledgers before run-peer's BookKeeper is up
         (c/exec :sleep :60)
@@ -167,9 +172,15 @@
         ledger-handles))
 
 (defn await-jobs-completions [peer-config jobs-data]
-  (mapv (fn [job-data]
+  (mapv (fn [[job-num job-data]]
           (onyx.api/await-job-completion peer-config (:job-id job-data)))
         jobs-data)) 
+
+(defn assigned-ledgers [ledger-ids job-num n-jobs]
+  (nth (partition-all (/ (count ledger-ids) 
+                         n-jobs) 
+                      ledger-ids)
+       job-num))
 
 (defrecord WriteLogClient [client jobs-data ledger-handles ledger-handle ledger-ids onyx-client]
   client/Client
@@ -200,6 +211,7 @@
                                                           :type :ok 
                                                           :value (do (close-ledger-handles @ledger-handles)
                                                                      (await-jobs-completions peer-config @jobs-data)
+                                                                     ; to debug, nil to ensure it's serializable for now
                                                                      nil))
                                                    (catch Throwable t
                                                      (assoc op :type :info :value t))))
@@ -208,11 +220,12 @@
                                (try
                                  (assoc op 
                                         :type :ok 
-                                        ;; FIXME: mapcatting everything together for now
-                                        :value (mapv read-ledger-entries 
-                                                     (mapcat (fn [job-data] 
-                                                               (get-written-ledgers onyx-client job-data onyx-id))
-                                                             @jobs-data)))
+                                        :value (into {} 
+                                                     (map (fn [[job-num job-data]] 
+                                                            (vector job-num 
+                                                                    (mapv read-ledger-entries 
+                                                                          (get-written-ledgers onyx-client job-data onyx-id))))
+                                                          @jobs-data)))
                                  (catch Throwable t
                                    (assoc op :type :info :value t))))
 
@@ -230,16 +243,15 @@
                              (try
                                (assoc op
                                       :type :ok
-                                      :value (let [ledgers (nth (partition-all (/ (count @ledger-ids) 
-                                                                                  (:n-jobs op)) 
-                                                                               @ledger-ids)
-                                                                (:job-num op))
-                                                   job-data (->> (simple-job/build-job (:params op) 
+                                      :value (let [{:keys [job-num n-jobs params]} op
+                                                   ledgers (assigned-ledgers @ledger-ids job-num n-jobs)
+                                                   job-data (->> (simple-job/build-job job-num 
+                                                                                       params
                                                                                        zk-addr
                                                                                        (onyx.log.zookeeper/ledgers-path onyx-id)
                                                                                        ledgers)
                                                                  (onyx.api/submit-job peer-config))]
-                                               (swap! jobs-data conj job-data)
+                                               (swap! jobs-data assoc job-num job-data)
                                                job-data))
                                (catch Throwable t
                                  (assoc op :type :info :value t)))) 
@@ -259,11 +271,10 @@
 (defn write-log-client [jobs-data ledger-handles ledger-ids]
   (->WriteLogClient nil jobs-data ledger-handles nil ledger-ids nil))
 
-;; Not actually used for anything currently
+;; Doesn't do anything yet
 (defrecord OnyxModel []
   Model
   (step [r op]
-    (info "Stepping " op)
     r))
 
 (defn adds
@@ -292,54 +303,57 @@
   []
   (gen/clients (gen/once {:type :invoke :f :close-ledgers-await-completion})))
 
-(defn submit-job-gen [n-jobs]
+(defn submit-job-gen [n-jobs job-params]
   (->> (range n-jobs)
        (map (fn [n] 
               {:type :invoke 
                :f :submit-job 
                :job-num n
                :n-jobs n-jobs
-               :params {:batch-size 1}}))
+               :params job-params}))
        gen/seq))
 
 (def os
   (reify os/OS
     (setup! [_ test node]
-      (info node "setting up preinstalled debian docker host")
+      (info node "Setting up preinstalled debian docker host")
       (debian/setup-hostfile!)
       (meh (net/heal)))
 
     (teardown! [_ test node])))
 
+(defn start-stop-nemesis-seq [awake-mean stopped-mean]
+  (gen/seq 
+    (mapcat (fn [_] 
+              [(gen/sleep (rand-int stopped-mean))
+               {:type :info :f :start}
+               (gen/sleep (rand-int awake-mean))
+               {:type :info :f :stop}]) 
+            (range)))) 
+
 (defn basic-test
   "A simple test of Onyx's safety."
   [version]
-  ;; TODO, have map with test parameters in edn
-  (let [n-jobs 1] 
+  (let [{:keys [n-jobs job-params n-peers time-limit]} test-setup]
     (merge tests/noop-test
            {:os os
             :db (setup version)
-            :client (write-log-client (atom []) (atom []) (atom []))
+            :client (write-log-client (atom {}) (atom []) (atom []))
             :model (->OnyxModel) ;; Currently not actually used for anything
-            :checker (onyx-checker/->Checker peer-config (:n-peers peer-setup))
+            :checker (onyx-checker/->Checker peer-config n-peers n-jobs)
             :generator (gen/phases
                          (->> (onyx-gen/filter-new identity 
                                                    (onyx-gen/frequency [(adds) 
-                                                                        (submit-job-gen n-jobs)
+                                                                        (submit-job-gen n-jobs job-params)
                                                                         ;(gen/once (gc-peer-logs))
                                                                         ]
-                                                                       [0.98
+                                                                       [0.99
                                                                         ;0.01
                                                                         0.01]))
                               (gen/stagger 1/10)
                               ;(gen/delay 1)
-                              (gen/nemesis
-                                (gen/seq (cycle
-                                           [(gen/sleep 30)
-                                            {:type :info :f :start}
-                                            (gen/sleep 200)
-                                            {:type :info :f :stop}])))
-                              (gen/time-limit 14000)) 
+                              (gen/nemesis (start-stop-nemesis-seq 400 200))
+                              (gen/time-limit time-limit)) 
 
                          ;; Bring everything back at the end
                          ;; This way we can test that the peers came back up
@@ -351,6 +365,6 @@
                          (close-await-completion-gen)
                          (read-ledgers-gen)
                          (read-peer-log-gen))
-            ;:nemesis (nemesis/partitioner (comp nemesis/bridge shuffle))
-            :nemesis (nemesis/partition-random-halves)
-            })))
+            :nemesis (case (:nemesis test-setup) 
+                       :bridge-shuffle (nemesis/partitioner (comp nemesis/bridge shuffle))
+                       :random-halves (nemesis/partition-random-halves))})))

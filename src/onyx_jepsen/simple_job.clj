@@ -42,7 +42,7 @@
                          :lifecycle/calls :onyx.plugin.bookkeeper/read-ledgers-calls})
                       read-ledger-task-names)))))
 
-(defn build-job [{:keys [batch-size] :as params} zk-addr ledgers-root-path ledger-ids]
+(defn build-job [job-num {:keys [batch-size] :as params} zk-addr ledgers-root-path ledger-ids]
   (let [password (.getBytes "INSECUREDEFAULTPASSWORD")
         job {:catalog [{:onyx/name :persist
                         :onyx/plugin :onyx.plugin.bookkeeper/write-ledger
@@ -58,7 +58,9 @@
                         :onyx/batch-size batch-size
                         :onyx/doc "Writes messages to a BookKeeper ledger"}
                        {:onyx/name :identity-log
-                        :onyx/fn :onyx-peers.functions.functions/identity-log
+                        :onyx/fn :onyx-peers.functions.functions/add-job-num
+                        :jepsen/job-num job-num
+                        :onyx/params [:jepsen/job-num]
                         :onyx/restart-pred-fn :onyx-peers.functions.functions/restartable?
                         :onyx/type :function
                         :onyx/batch-size batch-size}]
