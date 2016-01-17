@@ -5,8 +5,8 @@
             [jepsen.control :as c]))
 
 (def version
-  "What meowdb version should we test?"
-  "1.2.3")
+  "What onyx version should we test?"
+  "version-not-supplied")
 
 (deftest basic-test
   (is (:valid? (:results (jc/run! (oj/basic-test version))))))
