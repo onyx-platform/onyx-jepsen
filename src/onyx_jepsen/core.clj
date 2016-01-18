@@ -182,6 +182,7 @@
                       ledger-ids)
        job-num))
 
+;; TODO, merge jobs-data, ledger-handles, and ledger-ids atoms into one big atom map
 (defrecord WriteLogClient [client jobs-data ledger-handles ledger-handle ledger-ids onyx-client]
   client/Client
   (setup! [this test node]
@@ -338,6 +339,7 @@
     (merge tests/noop-test
            {:os os
             :db (setup version)
+            :name "onyx-basic"
             :client (write-log-client (atom {}) (atom []) (atom []))
             :model (->OnyxModel) ;; Currently not actually used for anything
             :checker (onyx-checker/->Checker peer-config n-peers n-jobs)
