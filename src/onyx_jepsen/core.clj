@@ -42,16 +42,6 @@
   (:import [org.apache.bookkeeper.client LedgerHandle LedgerEntry BookKeeper BookKeeper$DigestType AsyncCallback$AddCallback]
            [knossos.core Model]))
 
-(def version "0.8.3")
-
-(def test-setup 
-  {:job-params {:batch-size 1}
-   :nemesis :random-halves ; :bridge-shuffle or :random-halves
-   :time-limit 200
-   ; may or may not work when 5 is not divisible by n-jobs
-   :n-jobs 1
-   ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
-   :n-peers 3})
 
 (defn zk-node-ids
   "We number nodes in reverse order so the leader is the first node. Returns a
@@ -78,7 +68,7 @@
 
 (defn setup 
   "Sets up and tears down Onyx"
-  [version]
+  [test-setup version]
   (reify db/DB
     (setup! [_ test node]
 
@@ -234,12 +224,14 @@
                                       :type :ok
                                       :value (let [{:keys [job-num n-jobs params]} op
                                                    ledgers (assigned-ledgers @ledger-ids job-num n-jobs)
-                                                   job-data (->> (simple-job/build-job job-num 
-                                                                                       params
-                                                                                       zk-addr
-                                                                                       (onyx.log.zookeeper/ledgers-path onyx-id)
-                                                                                       ledgers)
-                                                                 (onyx.api/submit-job peer-config))]
+                                                   built-job (case (:job-type op) 
+                                                               :simple-job
+                                                               (simple-job/build-job job-num 
+                                                                                     params
+                                                                                     zk-addr
+                                                                                     (onyx.log.zookeeper/ledgers-path onyx-id)
+                                                                                     ledgers))
+                                                   job-data (onyx.api/submit-job peer-config built-job)]
                                                (swap! jobs-data assoc job-num job-data)
                                                job-data))
                                (catch Throwable t
@@ -306,9 +298,9 @@
 (defn start-stop-nemesis-seq [awake-mean stopped-mean]
   (gen/seq 
     (mapcat (fn [_] 
-              [(gen/sleep (rand-int stopped-mean))
+              [(gen/sleep (rand-int (* 2 stopped-mean)))
                {:type :info :f :start}
-               (gen/sleep (rand-int awake-mean))
+               (gen/sleep (rand-int (* 2 awake-mean)))
                {:type :info :f :stop}]) 
             (range))))
 
@@ -323,11 +315,11 @@
 
 (defn basic-test
   "A simple test of Onyx's safety."
-  [env-config peer-config version]
-  (let [{:keys [n-jobs job-params n-peers time-limit]} test-setup]
+  [env-config peer-config test-setup version]
+  (let [{:keys [n-jobs job-params n-peers time-limit awake-mean stopped-mean]} test-setup]
     (merge tests/noop-test
            {:os os
-            :db (setup version)
+            :db (setup test-setup version)
             :name "onyx-basic"
             :client (write-log-client env-config peer-config (atom {}) (atom []) (atom []))
             :model (->OnyxModel) ;; Currently not actually used for anything
@@ -343,7 +335,7 @@
                                                                         0.01]))
                               (gen/stagger 1/10)
                               ;(gen/delay 1)
-                              (gen/nemesis (start-stop-nemesis-seq 400 200))
+                              (gen/nemesis (start-stop-nemesis-seq awake-mean stopped-mean))
                               (gen/time-limit time-limit)) 
 
                          ;; Bring everything back at the end
@@ -358,4 +350,5 @@
                          (read-peer-log-gen))
             :nemesis (case (:nemesis test-setup) 
                        :bridge-shuffle (nemesis/partitioner (comp nemesis/bridge shuffle))
-                       :random-halves (nemesis/partition-random-halves))})))
+                       :random-halves (nemesis/partition-random-halves)
+                       :na nil)})))

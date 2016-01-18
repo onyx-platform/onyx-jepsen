@@ -112,7 +112,7 @@
                           :reads-correct-jobs? reads-correct-jobs?
                           :all-written-read? all-written-read?}
           invariants [job-invariants cluster-invariants]]
-      (doto {:valid? (empty? (filter false? (apply concat (map vals invariants))))
+      (doto {:valid? (empty? (filter false? (mapcat vals invariants)))
              :job-invariants job-invariants
              :cluster-invariants cluster-invariants
              :run-information {:added added-values
