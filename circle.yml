@@ -5,8 +5,8 @@ dependencies:
 
 test:
   override:
-          - lein with-profile dev,circle-ci test ":test-jepsen-tests" :
-        timeout: 480 
+          - lein with-profile dev,circle-ci test ":test-jepsen-tests":
+                  timeout: 480 
 
 machine:
   java:
