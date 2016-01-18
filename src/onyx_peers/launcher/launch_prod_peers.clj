@@ -7,7 +7,6 @@
             [taoensso.timbre :refer [info error debug fatal]]
             [onyx.compression.nippy :as nippy]
             [onyx.plugin.bookkeeper]
-            [onyx.plugin.core-async]
             [onyx.api]))
 
 (defn -main [n bind-addr & args]

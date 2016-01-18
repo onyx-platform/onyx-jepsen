@@ -10,9 +10,8 @@
             [clojure.core.async :as casync :refer [chan >!! <!! close! alts!!]]
             [clojure.tools.logging :refer :all]))
 
-(defn read-peer-log [log]
-  (let [ch (chan 1000)
-        timeout-ms 20000] 
+(defn read-peer-log [log timeout-ms]
+  (let [ch (chan 1000)] 
     (onyx.extensions/subscribe-to-log log ch)
     (loop [entries []]
       (if-let [entry (first (alts!! [ch (casync/timeout timeout-ms)]))]
@@ -41,8 +40,8 @@
     (let [;;;;;;;;;
           ;; Cluster invariants
           peer-log-reads (:value (first (filter (fn [action]
-                                                            (and (= (:f action) :read-peer-log)
-                                                                 (= (:type action) :ok)))
+                                                  (and (= (:f action) :read-peer-log)
+                                                       (= (:type action) :ok)))
                                                           history)))
           final-replica (playback-log peer-config peer-log-reads)
           log-conn (:log (component/start (system/onyx-client peer-config)))

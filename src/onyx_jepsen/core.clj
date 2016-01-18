@@ -190,7 +190,7 @@
                                 (try
                                   (assoc op 
                                          :type :ok 
-                                         :value (onyx-checker/read-peer-log (:log onyx-client)))
+                                         :value (onyx-checker/read-peer-log (:log onyx-client) (or (:timeout-ms op) 20000)))
                                   (catch Throwable t
                                     (assoc op :type :info :value t))))
         :close-ledgers-await-completion (timeout 2000000
