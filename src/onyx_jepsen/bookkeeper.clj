@@ -59,7 +59,7 @@
 (def || (c/lit "||"))
 
 (def env-config 
-  (-> "onyx-peers/resources/prod-env-config.edn" slurp read-string))
+  (-> "resources/prod-env-config.edn" slurp read-string))
 
 (defn bk-cfg-servers
   [test]
@@ -158,7 +158,7 @@
                         (loop [results [] 
                                entries (.readEntries ledger-handle 0 last-confirmed)
                                element ^LedgerEntry (.nextElement entries)] 
-                          (let [new-results (conj results (nippy/decompress (.getEntry element)))] 
+                          (let [new-results (conj results (nippy/window-log-decompress (.getEntry element)))] 
                             (if (.hasMoreElements entries)
                               (recur new-results entries (.nextElement entries))
                               new-results)))
@@ -196,7 +196,7 @@
                     (try
                       (do 
                         (info "Adding entry" (:value op))
-                        (.addEntry ledger-handle (nippy/compress (:value op)))
+                        (.addEntry ledger-handle (nippy/window-log-compress (:value op)))
                         (info "Done adding entry" (:value op))
                         (assoc op :type :ok :ledger-id (.getId ledger-handle)))
                       (catch Throwable t
