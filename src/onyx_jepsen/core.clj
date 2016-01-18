@@ -44,16 +44,10 @@
 
 (def version "0.8.3")
 
-(def env-config 
-  (-> "onyx-peers/resources/prod-env-config.edn" slurp read-string))
-
-(def peer-config 
-  (-> "onyx-peers/resources/prod-peer-config.edn" slurp read-string))
-
 (def test-setup 
   {:job-params {:batch-size 1}
    :nemesis :random-halves ; :bridge-shuffle or :random-halves
-   :time-limit 4000
+   :time-limit 200
    ; may or may not work when 5 is not divisible by n-jobs
    :n-jobs 1
    ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
@@ -93,7 +87,7 @@
         (c/exec "hostname" (name node))
 
         (info node "Uploading peers")
-        (c/upload "onyx-peers/target/onyx-peers-0.1.0-SNAPSHOT-standalone.jar" "/onyx-peers.jar")
+        (c/upload "target/onyx-jepsen-0.1.0-SNAPSHOT-standalone.jar" "/onyx-peers.jar")
         (c/upload "script/run-peers.sh" "/run-peers.sh")
         (c/exec :chmod "+x" "/run-peers.sh")
 
@@ -118,21 +112,15 @@
       (info node "set up"))
 
     (teardown! [_ test node]
-      (c/su
-        ;; Leave ZooKeeper up for now, may want to inspect it and
-        ;; our containers will ensure everything is nice after
-        (comment (c/exec :service :zookeeper :stop)
-                 (c/exec :rm :-rf
-                         (c/lit "/var/lib/zookeeper/version-*")
-                         (c/lit "/var/log/zookeeper/*"))
-                 (grepkill "java")))
-      (info node "tore down"))))
+      ;; Leave ZooKeeper up for now, may want to inspect it and
+      ;; docker ensures everything is still in a good state on the next run
+      (info node "tore down no-o no-opp"))))
 
-(defn bookkeeper-client []
+(defn bookkeeper-client [env-config]
   (obk/bookkeeper env-config))
 
-(defn read-ledger-entries [ledger-id]
-  (let [client (bookkeeper-client)
+(defn read-ledger-entries [env-config ledger-id]
+  (let [client (bookkeeper-client env-config)
         pwd (obk/password env-config)]
     (let [ledger-handle (obk/open-ledger client ledger-id obk/digest-type pwd)
           results (try 
@@ -183,10 +171,10 @@
        job-num))
 
 ;; TODO, merge jobs-data, ledger-handles, and ledger-ids atoms into one big atom map
-(defrecord WriteLogClient [client jobs-data ledger-handles ledger-handle ledger-ids onyx-client]
+(defrecord WriteLogClient [env-config peer-config client jobs-data ledger-handles ledger-handle ledger-ids onyx-client]
   client/Client
   (setup! [this test node]
-    (let [client (bookkeeper-client)
+    (let [client (bookkeeper-client env-config)
           lh (obk/new-ledger client env-config)
           onyx-client (component/start (onyx.system/onyx-client peer-config))]
       (swap! ledger-ids conj (.getId lh))
@@ -224,7 +212,7 @@
                                         :value (into {} 
                                                      (map (fn [[job-num job-data]] 
                                                             (vector job-num 
-                                                                    (mapv read-ledger-entries 
+                                                                    (mapv (partial read-ledger-entries env-config) 
                                                                           (get-written-ledgers onyx-client job-data onyx-id))))
                                                           @jobs-data)))
                                  (catch Throwable t
@@ -269,8 +257,9 @@
   (teardown! [_ test]
     (.close client)))
 
-(defn write-log-client [jobs-data ledger-handles ledger-ids]
-  (->WriteLogClient nil jobs-data ledger-handles nil ledger-ids nil))
+(defn write-log-client [env-config peer-config jobs-data ledger-handles ledger-ids]
+  (map->WriteLogClient {:env-config env-config :peer-config peer-config
+                        :jobs-data jobs-data :ledger-handles ledger-handles :ledger-ids ledger-ids}))
 
 ;; Doesn't do anything yet
 (defrecord OnyxModel []
@@ -314,15 +303,6 @@
                :params job-params}))
        gen/seq))
 
-(def os
-  (reify os/OS
-    (setup! [_ test node]
-      (info node "Setting up preinstalled debian docker host")
-      (debian/setup-hostfile!)
-      (meh (net/heal)))
-
-    (teardown! [_ test node])))
-
 (defn start-stop-nemesis-seq [awake-mean stopped-mean]
   (gen/seq 
     (mapcat (fn [_] 
@@ -330,17 +310,26 @@
                {:type :info :f :start}
                (gen/sleep (rand-int awake-mean))
                {:type :info :f :stop}]) 
-            (range)))) 
+            (range))))
+
+(def os
+  (reify os/OS
+    (setup! [_ test node]
+      (info node "Setting up preinstalled debian docker host")
+      (debian/setup-hostfile!)
+      (meh (net/heal)))
+
+    (teardown! [_ test node]))) 
 
 (defn basic-test
   "A simple test of Onyx's safety."
-  [version]
+  [env-config peer-config version]
   (let [{:keys [n-jobs job-params n-peers time-limit]} test-setup]
     (merge tests/noop-test
            {:os os
             :db (setup version)
             :name "onyx-basic"
-            :client (write-log-client (atom {}) (atom []) (atom []))
+            :client (write-log-client env-config peer-config (atom {}) (atom []) (atom []))
             :model (->OnyxModel) ;; Currently not actually used for anything
             :checker (onyx-checker/->Checker peer-config n-peers n-jobs)
             :generator (gen/phases

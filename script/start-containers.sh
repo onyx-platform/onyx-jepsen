@@ -7,10 +7,8 @@ set -o xtrace
 
 BASE_PATH=$(cd "$(dirname "$0")"; pwd)"/.."
 
-if [[ "$1" == "uberjar" ]]; then
-	cd onyx-peers && lein clean && lein with-profile uberjar uberjar && cd ..
-fi
 
+lein clean && lein with-profile uberjar uberjar
 
 # Share the onyx-jepsen code, and m2 directory (so we don't have to redownload jars every time)
 

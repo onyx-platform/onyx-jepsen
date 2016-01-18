@@ -6,7 +6,7 @@ Jepsen testing Onyx. **Work in progress**
 
 To run:
 
-1. Set onyx dependency versions for the peers in onyx-peers/project.clj.
+1. Set onyx dependency versions for the peers in project.clj.
    Snapshot versions are acceptable, but be sure to lein install them before
    running your tests as you may end up downloading a snapshot jar from
    clojars.
@@ -32,7 +32,7 @@ eval "$(docker-machine env jepsen-onyx)"
 
 4. Uberjar peers and start docker in docker instance:
 ```
-scripts/start-containers.sh uberjar
+scripts/start-containers.sh
 ```
 
 5. Run from inside docker in docker.
@@ -44,6 +44,12 @@ When running a new test, exit the docker instance, and restart the process from
 4. The docker containers have everything setup perfectly so that nothing needs
 to be downloaded or installed before running a test. The jepsen test does not
 clean up after itself so a new container must be started before running a new test.
+
+## Docker Image
+
+onyx-jepsen uses a custom jepsen docker image built specifically to test Onyx.
+This includes pre-installed ZooKeeper. See the README in the docker directory
+for more details.
 
 ## Notes
 
