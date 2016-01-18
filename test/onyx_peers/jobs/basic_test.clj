@@ -15,7 +15,7 @@
             [taoensso.timbre :refer [fatal info]]
             [onyx.api]))
 
-(deftest basic-test
+(deftest ^:test-jepsen-tests basic-test
   (let [id (java.util.UUID/randomUUID)
         config (load-config)
         env-config (assoc (:env-config config) :onyx/id id)
