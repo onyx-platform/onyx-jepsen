@@ -20,6 +20,7 @@
   [{:id 1  :age 21 :event-time #inst "2015-09-13T03:00:00.829-00:00"}
    {:id 2  :age 12 :event-time #inst "2015-09-13T03:04:00.829-00:00"}
    {:id 3  :age 3  :event-time #inst "2015-09-13T03:05:00.829-00:00"}
+   ;; duplicate values
    {:id 3  :age 3  :event-time #inst "2015-09-13T03:05:00.829-00:00"}
    {:id 3  :age 3  :event-time #inst "2015-09-13T03:05:00.829-00:00"}
    {:id 4  :age 64 :event-time #inst "2015-09-13T03:06:00.829-00:00"}
@@ -35,55 +36,6 @@
    {:id 13 :age 83 :event-time #inst "2015-09-13T03:59:00.829-00:00"}
    {:id 14 :age 60 :event-time #inst "2015-09-13T03:32:00.829-00:00"}
    {:id 15 :age 35 :event-time #inst "2015-09-13T03:16:00.829-00:00"}])
-
-(def expected-windows
-  [[Double/NEGATIVE_INFINITY 
-    Double/POSITIVE_INFINITY
-    #{{:id 1,
-       :age 21,
-       :event-time #inst "2015-09-13T03:00:00.829-00:00"}
-      {:id 2,
-       :age 12,
-       :event-time #inst "2015-09-13T03:04:00.829-00:00"}
-      {:id 3,
-       :age 3,
-       :event-time #inst "2015-09-13T03:05:00.829-00:00"}
-      {:id 4,
-       :age 64,
-       :event-time #inst "2015-09-13T03:06:00.829-00:00"}
-      {:id 5,
-       :age 53,
-       :event-time #inst "2015-09-13T03:07:00.829-00:00"}
-      {:id 6,
-       :age 52,
-       :event-time #inst "2015-09-13T03:08:00.829-00:00"}
-      {:id 7,
-       :age 24,
-       :event-time #inst "2015-09-13T03:09:00.829-00:00"}
-      {:id 8,
-       :age 35,
-       :event-time #inst "2015-09-13T03:15:00.829-00:00"}
-      {:id 9,
-       :age 49,
-       :event-time #inst "2015-09-13T03:25:00.829-00:00"}
-      {:id 10,
-       :age 37,
-       :event-time #inst "2015-09-13T03:45:00.829-00:00"}
-      {:id 11,
-       :age 15,
-       :event-time #inst "2015-09-13T03:03:00.829-00:00"}
-      {:id 12,
-       :age 22,
-       :event-time #inst "2015-09-13T03:56:00.829-00:00"}
-      {:id 13,
-       :age 83,
-       :event-time #inst "2015-09-13T03:59:00.829-00:00"}
-      {:id 14,
-       :age 60,
-       :event-time #inst "2015-09-13T03:32:00.829-00:00"}
-      {:id 15,
-       :age 35,
-       :event-time #inst "2015-09-13T03:16:00.829-00:00"}}]])
 
 (deftest ^:test-jepsen-tests aggregation-state-test
   (let [id (java.util.UUID/randomUUID)
@@ -125,7 +77,6 @@
                               (conj vs event (client/invoke! setup-client test (gen/op simple-gen test 0))))
                             []
                             events)
-            _ (Thread/sleep 2000)
             results (check/check checker test model history)]
         (println results)
         (is (:valid? results))))))
