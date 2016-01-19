@@ -93,7 +93,10 @@
   (let [exception (job-exception log-conn final-replica)
         ledger-reads (first (history->read-ledgers history :persist))
         trigger-ledger-reads (first (history->read-ledgers history :identity-log))
-        _ (println "Trigger ledger reads " trigger-ledger-reads)
+        ;; grab only job 0's ledgers for now
+        final-window-state-write (last (last (:results (last (get (:value trigger-ledger-reads) 0)))))
+        window-state-filtered? (= (sort-by :id final-window-state-write) 
+                                  (sort-by :id (set final-window-state-write)))
         ledger-read-results (ledger-reads->job+reads ledger-reads)
         ;; Add a check here that there are no overlaps in the ledgers read by the jobs
         correct-jobs? (reads-correct-jobs? ledger-read-results)
@@ -103,17 +106,25 @@
                          (mapcat :read-results)
                          (map #(dissoc % :job-num))
                          set)
-        diff-written-read (clojure.set/difference added-values read-values)
-        all-written-read? (empty? diff-written-read)
+        diff-added-read (clojure.set/difference added-values read-values)
+        all-added-read? (empty? diff-added-read)
+        all-added-triggered? (empty? 
+                               (clojure.set/difference added-values 
+                                                       (->> final-window-state-write
+                                                            (map #(dissoc % :job-num))
+                                                            set)))
         unacked-writes-read (clojure.set/difference read-values added-values)]
     {:information {:read-values read-values
-                   :diff-written-read diff-written-read
+                   :diff-added-read diff-added-read
                    :unacknowledged-writes-read unacked-writes-read
                    :job-exception-message (some-> exception (.getMessage))
-                   :job-exception-trace (if exception (with-out-str (clojure.stacktrace/print-stack-trace exception)))}
-     :invariants {:job-completed? (nil? exception)
+                   :job-exception-trace (if exception 
+                                          (with-out-str (clojure.stacktrace/print-stack-trace exception)))}
+     :invariants {:window-state-filtered? window-state-filtered?
+                  :job-completed? (nil? exception)
                   :reads-correct-jobs? correct-jobs?
-                  :all-written-read? all-written-read?}}))
+                  :all-added-triggered? all-added-triggered?
+                  :all-added-read? all-added-read?}}))
 
 (defn history->job-name [history]
   (:job-type (first (filter (fn [action]
