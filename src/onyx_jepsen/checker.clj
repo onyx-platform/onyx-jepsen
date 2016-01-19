@@ -32,6 +32,95 @@
 (defn pulses [conn peer-config]
   (onyx.log.curator/children conn (onyx.log.zookeeper/pulse-path (:onyx/id peer-config))))
 
+(defn history->read-ledgers [history task-name]
+  (filter (fn [action]
+            (and (= (:f action) :read-ledgers)
+                 (= (:task action) task-name)
+                 (= (:type action) :ok)))
+          history))
+
+(defn ledger-reads->job+reads [ledger-reads]
+  (->> ledger-reads
+       :value
+       (mapcat (fn [[job-num reads]]
+                 (map (fn [r] 
+                        {:job-num job-num
+                         :read-results (:results r)}) 
+                      reads)))))
+
+(defn reads-correct-jobs? [job+reads]
+  (empty? 
+    (remove (fn [{:keys [read-results job-num]}]
+              (or (empty? read-results) 
+                  (= #{job-num} (set (map :job-num read-results)))))
+            job+reads)))
+
+(defn job-exception [log-conn final-replica]
+  (if-let [killed-job (first (:killed-jobs final-replica))] 
+    (onyx.extensions/read-chunk log-conn :exception killed-job)))
+
+(defn history->successful-writes [history]
+  (filter (fn [action]
+            (and (= (:f action) :add)
+                 (= (:type action) :ok)))
+          history))
+
+(defn simple-job-invariants [log-conn history final-replica n-jobs]
+  (let [exception (job-exception log-conn final-replica)
+        ledger-reads (first (history->read-ledgers history :persist))
+        ledger-read-results (ledger-reads->job+reads ledger-reads)
+        ;; Add a check here that there are no overlaps in the ledgers read by the jobs
+        correct-jobs? (reads-correct-jobs? ledger-read-results)
+        successfully-added (history->successful-writes history)
+        added-values (set (map :value successfully-added))
+        read-values (->> ledger-read-results
+                         (mapcat :read-results)
+                         (map :value)
+                         set)
+        diff-written-read (clojure.set/difference added-values read-values)
+        all-written-read? (empty? diff-written-read)
+        unacked-writes-read (clojure.set/difference read-values added-values)]
+    {:information {:read-values read-values
+                   :diff-written-read diff-written-read
+                   :unacknowledged-writes-read unacked-writes-read
+                   :job-exception-message (some-> exception (.getMessage))
+                   :job-exception-trace (if exception (with-out-str (clojure.stacktrace/print-stack-trace exception)))}
+     :invariants {:job-completed? (nil? exception)
+                  :reads-correct-jobs? correct-jobs?
+                  :all-written-read? all-written-read?}}))
+
+(defn window-state-job-invariants [log-conn history final-replica n-jobs]
+  (let [exception (job-exception log-conn final-replica)
+        ledger-reads (first (history->read-ledgers history :persist))
+        trigger-ledger-reads (first (history->read-ledgers history :identity-log))
+        _ (println "Trigger ledger reads " trigger-ledger-reads)
+        ledger-read-results (ledger-reads->job+reads ledger-reads)
+        ;; Add a check here that there are no overlaps in the ledgers read by the jobs
+        correct-jobs? (reads-correct-jobs? ledger-read-results)
+        successfully-added (history->successful-writes history)
+        added-values (set (map :value successfully-added))
+        read-values (->> ledger-read-results
+                         (mapcat :read-results)
+                         (map #(dissoc % :job-num))
+                         set)
+        diff-written-read (clojure.set/difference added-values read-values)
+        all-written-read? (empty? diff-written-read)
+        unacked-writes-read (clojure.set/difference read-values added-values)]
+    {:information {:read-values read-values
+                   :diff-written-read diff-written-read
+                   :unacknowledged-writes-read unacked-writes-read
+                   :job-exception-message (some-> exception (.getMessage))
+                   :job-exception-trace (if exception (with-out-str (clojure.stacktrace/print-stack-trace exception)))}
+     :invariants {:job-completed? (nil? exception)
+                  :reads-correct-jobs? correct-jobs?
+                  :all-written-read? all-written-read?}}))
+
+(defn history->job-name [history]
+  (:job-type (first (filter (fn [action]
+                              (and (= (:f action) :submit-job)
+                                   (= (:type action) :ok)))
+                            history))))
+
 ;; TODO, check whether the jobs were even submitted, if not, nothing should be read back 
 ;; important for short running tests
 (defrecord Checker [peer-config n-peers n-jobs]
@@ -42,7 +131,7 @@
           peer-log-reads (:value (first (filter (fn [action]
                                                   (and (= (:f action) :read-peer-log)
                                                        (= (:type action) :ok)))
-                                                          history)))
+                                                history)))
           final-replica (playback-log peer-config peer-log-reads)
           log-conn (:log (component/start (system/onyx-client peer-config)))
           all-peers-up? (= (count (:peers final-replica))
@@ -55,73 +144,20 @@
           accepting-empty? (empty? (:accepted final-replica))
           prepared-empty? (empty? (:prepared final-replica))
 
-          cluster-invariants {:all-peers-up? all-peers-up? 
-                              :peers-match-pulses? peers-match-pulses? 
-                              :accepting-empty? accepting-empty? 
-                              :prepared-empty? prepared-empty?}
+          invariants-cluster {:invariants {:all-peers-up? all-peers-up? 
+                                           :peers-match-pulses? peers-match-pulses? 
+                                           :accepting-empty? accepting-empty? 
+                                           :prepared-empty? prepared-empty?}
+                              :information {:pulse-peers pulse-peers
+                                            :peer-log peer-log-reads
+                                            :final-replica final-replica}}
 
-          ;;;;;;;;;
-          ;; Job invariants
-
-          exception (if-let [killed-job (first (:killed-jobs final-replica))] 
-                      (onyx.extensions/read-chunk log-conn :exception killed-job))
-
-          ledger-reads (first (filter (fn [action]
-                                        (and (= (:f action) :read-ledgers)
-                                             (= (:type action) :ok)))
-                                      history))
-
-
-          ledger-read-results (->> ledger-reads
-                                   :value
-                                   (mapcat (fn [[job-num reads]]
-                                             (map (fn [r] 
-                                                    {:job-num job-num
-                                                     :read-results (:results r)}) 
-                                                  reads))))
-
-          ;; Add a check here that there are no overlaps in the ledgers read by the jobs
-          reads-correct-jobs? (empty? 
-                                (remove (fn [{:keys [read-results job-num]}]
-                                          (or (empty? read-results) 
-                                              (= #{job-num} (set (map :job-num read-results)))))
-                                        ledger-read-results))
-
-          successfully-added (filter (fn [action]
-                                       (and (= (:f action) :add)
-                                            (= (:type action) :ok)))
-                                     history)
-
-          added-values (set (map :value successfully-added))
-
-          read-values (->> ledger-read-results
-                           (mapcat :read-results)
-                           (map :value)
-                           set)
-
-          diff-written-read (clojure.set/difference added-values read-values)
-          all-written-read? (empty? diff-written-read)
-
-          ;; Check that all values at the output went through the second task first
-          all-job-set (set (mapcat (fn [lr] 
-                                     (map :job-num (:results lr))) 
-                                   (:value ledger-reads)))
-          all-through-intermediate? (= all-job-set (set (range 0 n-jobs)))
-          unacked-writes-read (clojure.set/difference read-values added-values)
-          job-invariants {:job-completed? (nil? exception)
-                          :reads-correct-jobs? reads-correct-jobs?
-                          :all-written-read? all-written-read?}
-          invariants [job-invariants cluster-invariants]]
-      (doto {:valid? (empty? (filter false? (mapcat vals invariants)))
-             :job-invariants job-invariants
-             :cluster-invariants cluster-invariants
-             :run-information {:added added-values
-                               :read-values read-values
-                               :diff-written-read diff-written-read
-                               :unacknowledged-writes-read unacked-writes-read
-                               :job-exception-message (some-> exception (.getMessage))
-                               :job-exception-trace (if exception (with-out-str (clojure.stacktrace/print-stack-trace exception)))
-                               :pulse-peers pulse-peers
-                               :peer-log peer-log-reads
-                               :final-replica final-replica}}
+          job-invariants-fn (case (history->job-name history)
+                              :simple-job simple-job-invariants 
+                              :window-state-job window-state-job-invariants)
+          invariants-job (job-invariants-fn log-conn history final-replica n-jobs)
+          invariants [invariants-job invariants-cluster]]
+      (doto {:valid? (empty? (filter false? (mapcat (comp vals :invariants) invariants)))
+             :job-invariants invariants-job
+             :cluster-invariants invariants-cluster}
         info))))
