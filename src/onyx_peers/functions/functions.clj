@@ -13,4 +13,4 @@
                         trigger 
                         {:keys [window-id upper-bound lower-bound]} 
                         state]
-  (.addEntry ledger-handle (nippy/zookeeper-compress [lower-bound upper-bound (set state)])))
+  (.addEntry ledger-handle (nippy/zookeeper-compress [lower-bound upper-bound state])))
