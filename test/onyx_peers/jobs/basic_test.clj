@@ -9,9 +9,9 @@
             [onyx-jepsen.core :as oj]
             [onyx.test-helper :refer [load-config with-test-env]]
             [onyx-jepsen.simple-job :as simple-job]
-
             [onyx.plugin.bookkeeper]
             [onyx-peers.functions.functions]
+            [onyx-peers.lifecycles.restart-lifecycle]
             [taoensso.timbre :refer [fatal info]]
             [onyx.api]))
 

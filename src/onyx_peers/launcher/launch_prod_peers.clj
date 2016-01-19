@@ -4,6 +4,7 @@
             [clojure.java.io :refer [resource]]
             ;[onyx-peers.lifecycles.lifecycle]
             [onyx-peers.functions.functions]
+            [onyx-peers.lifecycles.restart-lifecycle]
             [taoensso.timbre :refer [info error debug fatal]]
             [onyx.compression.nippy :as nippy]
             [onyx.plugin.bookkeeper]

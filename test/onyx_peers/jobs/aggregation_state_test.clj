@@ -12,6 +12,7 @@
             [onyx.compression.nippy :as nippy]
             [onyx-peers.functions.functions]
             [onyx.plugin.bookkeeper]
+            [onyx-peers.lifecycles.restart-lifecycle]
             [onyx.test-helper :refer [load-config with-test-env]]
             [taoensso.timbre :refer [fatal info]]
             [onyx.api]))
