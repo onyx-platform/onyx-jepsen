@@ -24,10 +24,9 @@
         version "dummy-version"
         test-setup {:job-params {:batch-size 1}
                     :nemesis :na
-                    ; unused in this test
-                    :time-limit 800
-                    :awake-mean 200
-                    :stopped-mean 100
+                    :time-limit 800 ; unused in this test
+                    :awake-mean 200 ; unused in this test
+                    :stopped-mean 100 ; unused in this test
                     ; may or may not work when 5 is not divisible by n-jobs
                     :n-jobs 1
                     ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
@@ -48,7 +47,7 @@
                  :n-jobs (:n-jobs test-setup) 
                  :params (:job-params test-setup)}
                 {:type :invoke :f :close-ledgers-await-completion}
-                {:type :invoke :f :read-ledgers}
+                {:type :invoke :f :read-ledgers :task :persist}
                 {:type :invoke :f :read-peer-log :timeout 1000}]
         simple-gen (gen/seq events)]
     (with-test-env [test-env [n-peers-total env-config peer-config]]

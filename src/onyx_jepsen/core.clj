@@ -135,11 +135,11 @@
       {:ledger-id ledger-id
        :results results})))
 
-(defn get-written-ledgers [onyx-client job-data onyx-id]
+(defn get-written-ledgers [onyx-client job-data onyx-id task-name]
   (onyx.plugin.bookkeeper/read-ledgers-data (:log onyx-client) 
                                             onyx-id 
                                             (:job-id job-data)
-                                            (get-in job-data [:task-ids :persist :id])))
+                                            (get-in job-data [:task-ids task-name :id])))
 
 
 (defn close-ledger-handles [ledger-handles]
@@ -183,6 +183,7 @@
                                          :value (onyx-checker/read-peer-log (:log onyx-client) (or (:timeout-ms op) 20000)))
                                   (catch Throwable t
                                     (assoc op :type :info :value t))))
+
         :close-ledgers-await-completion (timeout 2000000
                                                  (assoc op :type :info :value :timed-out)
                                                  (try
@@ -194,6 +195,7 @@
                                                                      nil))
                                                    (catch Throwable t
                                                      (assoc op :type :info :value t))))
+
         :read-ledgers (timeout 1000000
                                (assoc op :type :info :value :timed-out)
                                (try
@@ -203,7 +205,7 @@
                                                      (map (fn [[job-num job-data]] 
                                                             (vector job-num 
                                                                     (mapv (partial read-ledger-entries env-config) 
-                                                                          (get-written-ledgers onyx-client job-data onyx-id))))
+                                                                          (get-written-ledgers onyx-client job-data onyx-id (:task op)))))
                                                           @jobs-data)))
                                  (catch Throwable t
                                    (assoc op :type :info :value t))))
@@ -225,6 +227,12 @@
                                       :value (let [{:keys [job-num n-jobs params]} op
                                                    ledgers (assigned-ledgers @ledger-ids job-num n-jobs)
                                                    built-job (case (:job-type op) 
+                                                               :window-state-job 
+                                                               (simple-job/build-window-state-job job-num 
+                                                                                                  params
+                                                                                                  zk-addr
+                                                                                                  (onyx.log.zookeeper/ledgers-path onyx-id)
+                                                                                                  ledgers)
                                                                :simple-job
                                                                (simple-job/build-job job-num 
                                                                                      params
@@ -274,8 +282,8 @@
        gen/seq))
 
 (defn read-ledgers-gen
-  []
-  (gen/clients (gen/once {:type :invoke :f :read-ledgers})))
+  [task-name]
+  (gen/clients (gen/once {:type :invoke :f :read-ledgers :value task-name})))
 
 (defn read-peer-log-gen
   []
@@ -346,7 +354,7 @@
                          (gen/sleep 120)
 
                          (close-await-completion-gen)
-                         (read-ledgers-gen)
+                         (read-ledgers-gen :persist)
                          (read-peer-log-gen))
             :nemesis (case (:nemesis test-setup) 
                        :bridge-shuffle (nemesis/partitioner (comp nemesis/bridge shuffle))
