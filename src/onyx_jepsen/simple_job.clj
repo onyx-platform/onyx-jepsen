@@ -88,9 +88,9 @@
                         :onyx/batch-size batch-size}
                        {:onyx/name :identity-log
                         :onyx/fn :onyx-peers.functions.functions/add-job-num
-                        :onyx/group-by-key :event-time 
+                        ;:onyx/group-by-key :event-time 
                         :onyx/uniqueness-key :id
-                        :onyx/flux-policy :continue
+                        ;:onyx/flux-policy :continue
                         :onyx/n-peers 1
                         :jepsen/job-num job-num
                         :onyx/params [:jepsen/job-num]
@@ -117,7 +117,6 @@
                          :trigger/refinement :accumulating
                          :trigger/on :segment
                          :trigger/fire-all-extents? true
-                         ;:trigger/notifications [:task-complete]
                          :trigger/threshold [1 :elements]
                          :trigger/sync :onyx-peers.functions.functions/update-state-log}]
              :lifecycles [{:lifecycle/task :persist
