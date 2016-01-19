@@ -356,5 +356,44 @@ Peers never get their join messages into the log? Maybe because they never get r
 Zillions of aborts and joins. One abort has nil peer-id
 
 ######################################################################
-#### 20151218T080642.000Z
-### Success for 4000s after removing failure detector!Failure detector seems to go awry
+#### 20151220T061717.000Z
+### Import one, peers didn't rejoin but not infinite messages in log (just 13000?)
+
+######################################################################
+#### 20151220T143019.000Z
+### Not fully read - problem in the BK plugin?
+
+######################################################################
+#### 20151225T140134.000Z
+### Lots of exhaust inputs?
+
+######################################################################
+#### 20151226T045937.000Z
+### Job killed? Only a problem in the intermediate task would cause that.
+
+
+######################################################################
+#### 20151229T195312.000Z
+### Peers not starting back up correctly, looks like not restarting on all ZK exceptions
+
+Looks like we're still getting some messages intended for other peers. Maybe because peer reusing id or something?
+
+15-Dec-29 19:58:27 n1 FATAL [onyx.peer.task-lifecycle] -
+                              ^[[37mjava.lang.Thread.run^[[m  ^[[32m            Thread.java:  745^[[m
+^[[37mjava.util.concurrent.ThreadPoolExecutor$Worker.run^[[m  ^[[32mThreadPoolExecutor.java:  617^[[m
+ ^[[37mjava.util.concurrent.ThreadPoolExecutor.runWorker^[[m  ^[[32mThreadPoolExecutor.java: 1142^[[m
+                                               ^[[37m...^[[m  ^[[32m                             ^[[m
+                 ^[[33mclojure.core.async/thread-call/^[[1;33mfn^[[m  ^[[32m              async.clj:  434^[[m
+   ^[[33monyx.peer.task-lifecycle/launch-aux-threads!/^[[1;33mfn^[[m  ^[[32m     task_lifecycle.clj:  347^[[m
+           ^[[33monyx.peer.function.Function/^[[1;33mack-segment^[[m  ^[[32m           function.clj      ^[[m
+^[[1;31mjava.lang.AbstractMethodError^[[m: ^[[3mMethod onyx/peer/function/Function.ack_segment(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; is abstract^[[m
+
+######################################################################
+#### 20151230T112311.000Z
+### Infinitely recurring log, timed out
+See bad-log-cycle.log
+
+######################################################################
+#### 20160116T161532.000Z
+### Exception reading back the list of written ledgers
+I believe that nothing was ever written to one of the ledgers, and therefore the job had nothing to read back
