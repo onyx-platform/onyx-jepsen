@@ -15,6 +15,9 @@
             [taoensso.timbre :refer [fatal info]]
             [onyx.api]))
 
+(def input
+  (vec (range 6)))
+
 (deftest ^:test-jepsen-tests basic-test
   (let [id (java.util.UUID/randomUUID)
         config (load-config)
@@ -23,6 +26,7 @@
         test "basic-clojure-test"
         version "dummy-version"
         test-setup {:job-params {:batch-size 1}
+                    :job-type :simple-job
                     :nemesis :na
                     :time-limit 800 ; unused in this test
                     :awake-mean 200 ; unused in this test
@@ -33,21 +37,18 @@
                     :n-peers 3}
         fake-clients 5
         n-peers-total (* fake-clients (:n-peers test-setup))
-        events [{:type :invoke :f :add :value 1}
-                {:type :invoke :f :add :value 2}
-                {:type :invoke :f :add :value 3}
-                {:type :invoke :f :add :value 4}
-                {:type :invoke :f :add :value 5}
-                {:type :invoke :f :add :value 6}
-                {:type :invoke 
-                 :f :submit-job 
-                 :job-type :simple-job 
-                 :job-num 0 
-                 :n-jobs (:n-jobs test-setup) 
-                 :params (:job-params test-setup)}
-                {:type :invoke :f :close-ledgers-await-completion}
-                {:type :invoke :f :read-ledgers :task :persist}
-                {:type :invoke :f :read-peer-log :timeout 1000}]
+        events (into (mapv (fn [v]
+                             {:type :invoke :f :add :value v})
+                           input)
+                     [{:type :invoke 
+                       :f :submit-job 
+                       :job-type (:job-type test-setup) 
+                       :job-num 0 
+                       :n-jobs (:n-jobs test-setup) 
+                       :params (:job-params test-setup)}
+                      {:type :invoke :f :close-ledgers-await-completion}
+                      {:type :invoke :f :read-ledgers :task :persist}
+                      {:type :invoke :f :read-peer-log :timeout 1000}])
         {:keys [client checker model generator] :as basic-test} 
         (onyx-test/jepsen-test env-config peer-config test-setup test version (gen/seq events))]
     (with-test-env [test-env [n-peers-total env-config peer-config]]
