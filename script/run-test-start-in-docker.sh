@@ -1,6 +1,11 @@
 #!/bin/bash
 
-TEST="onyx-jepsen.onyx-basic-test"
+set -o errexit
+set -o pipefail
+set -o nounset
+set -o xtrace
+
+TEST=$1
 
 cd /onyx-jepsen
 hostname d1 && \
@@ -8,7 +13,7 @@ hostname d1 && \
 	echo "127.0.0.1   localhost d1" >> hosts.tmp && \
 	cat hosts.tmp > /etc/hosts && rm -f hosts.tmp && \
 	cd /onyx-jepsen/ && \
-	lein test :only $TEST |& tee test-output.log
+	lein test :only $TEST |& tee test-output.log || true
 
 cp test-output.log store/latest/
 

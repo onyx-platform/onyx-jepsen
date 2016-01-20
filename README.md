@@ -37,8 +37,10 @@ scripts/start-containers.sh
 
 5. Run from inside docker in docker.
 ```
-script/run-test-start-in-docker.sh
+script/run-test-start-in-docker.sh TEST_NS
 ```
+
+Where TEST_NS is currently either `onyx-jepsen.onyx-basic-test` or `onyx-jepsen.onyx-aggregation-test`.
 
 When running a new test, exit the docker instance, and restart the process from
 4. The docker containers have everything setup perfectly so that nothing needs
