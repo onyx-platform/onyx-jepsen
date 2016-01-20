@@ -97,7 +97,7 @@
     (onyx.extensions/subscribe-to-log log ch)
     (loop [entries []]
       (if-let [entry (first (alts!! [ch (casync/timeout timeout-ms)]))]
-        (do (info "Read " entry)
+        (do (info "LOG ENTRY:" entry)
             (recur (conj entries entry)))
         entries))))
 
@@ -105,7 +105,7 @@
   (into {} 
         (map (fn [[job-num job-data]] 
                (vector job-num 
-                       (mapv #(read-ledger-entries env-config %) 
+                       (mapv (partial read-ledger-entries env-config) 
                              (get-written-ledgers onyx-client job-data onyx-id task-name))))
              jobs)))
 
