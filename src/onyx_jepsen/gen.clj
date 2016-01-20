@@ -49,3 +49,47 @@
         (let [selection (wrand probabilities)]
           (gen/op (gens selection) test process))))))
 
+(defn adds
+  "Generator that emits :add operations for sequential integers."
+  []
+  (->> (range)
+       (map (fn [x] {:type :invoke, :f :add, :value x}))
+       gen/seq))
+
+(defn gc-peer-logs
+  "Generator that emits :add operations for sequential integers."
+  []
+  (->> (range)
+       (map (fn [x] {:type :invoke, :f :gc-peer-log}))
+       gen/seq))
+
+(defn read-ledgers-gen
+  [task-name]
+  (gen/clients (gen/once {:type :invoke :f :read-ledgers :value task-name})))
+
+(defn read-peer-log-gen
+  []
+  (gen/clients (gen/once {:type :invoke :f :read-peer-log})))
+
+(defn close-await-completion-gen
+  []
+  (gen/clients (gen/once {:type :invoke :f :close-ledgers-await-completion})))
+
+(defn submit-job-gen [n-jobs job-params]
+  (->> (range n-jobs)
+       (map (fn [n] 
+              {:type :invoke 
+               :f :submit-job 
+               :job-num n
+               :n-jobs n-jobs
+               :params job-params}))
+       gen/seq))
+
+(defn start-stop-nemesis-seq [awake-mean stopped-mean]
+  (gen/seq 
+    (mapcat (fn [_] 
+              [(gen/sleep (rand-int (* 2 stopped-mean)))
+               {:type :info :f :start}
+               (gen/sleep (rand-int (* 2 awake-mean)))
+               {:type :info :f :stop}]) 
+            (range))))

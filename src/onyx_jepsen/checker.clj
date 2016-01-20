@@ -10,14 +10,6 @@
             [clojure.core.async :as casync :refer [chan >!! <!! close! alts!!]]
             [clojure.tools.logging :refer :all]))
 
-(defn read-peer-log [log timeout-ms]
-  (let [ch (chan 1000)] 
-    (onyx.extensions/subscribe-to-log log ch)
-    (loop [entries []]
-      (if-let [entry (first (alts!! [ch (casync/timeout timeout-ms)]))]
-        (do (info "Read " entry)
-            (recur (conj entries entry)))
-        entries))))
 
 (defn base-replica [peer-config]
   (merge replica/base-replica 
@@ -144,7 +136,8 @@
                                                        (= (:type action) :ok)))
                                                 history)))
           final-replica (playback-log peer-config peer-log-reads)
-          log-conn (:log (component/start (system/onyx-client peer-config)))
+          peer-client (component/start (system/onyx-client peer-config))
+          log-conn (:log peer-client)
           all-peers-up? (= (count (:peers final-replica))
                            (* 5 n-peers))
           pulse-peers (pulses (:conn log-conn) peer-config)
@@ -168,6 +161,7 @@
                               :window-state-job window-state-job-invariants)
           invariants-job (job-invariants-fn log-conn history final-replica n-jobs)
           invariants [invariants-job invariants-cluster]]
+      (component/stop peer-client)
       (doto {:valid? (empty? (filter false? (mapcat (comp vals :invariants) invariants)))
              :job-invariants invariants-job
              :cluster-invariants invariants-cluster}

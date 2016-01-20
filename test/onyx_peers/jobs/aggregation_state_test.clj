@@ -5,9 +5,9 @@
              [client :as client]
              [checker :as check]
              [generator :as gen]]
-            [onyx-jepsen.core :as oj]
             [onyx.plugin.core-async :refer [take-segments!]]
             [onyx.log.zookeeper :as zk]
+            [onyx-jepsen.onyx-test :as onyx-test]
             [onyx-jepsen.simple-job :as simple-job]
             [onyx.compression.nippy :as nippy]
             [onyx-peers.functions.functions]
@@ -56,7 +56,6 @@
                     :n-peers 3}
         fake-clients 5
         n-peers-total (* fake-clients (:n-peers test-setup))
-        {:keys [client checker model generator] :as basic-test} (oj/basic-test env-config peer-config test-setup version)
         events (into (mapv (fn [v]
                              {:type :invoke :f :add :value v})
                            input)
@@ -70,14 +69,17 @@
                       {:type :invoke :f :read-ledgers :task :persist}
                       {:type :invoke :f :read-ledgers :task :identity-log}
                       {:type :invoke :f :read-peer-log :timeout 1000}])
-        
-        simple-gen (gen/seq events)]
+        simple-gen (gen/seq events)
+        {:keys [client checker model generator] :as basic-test} (onyx-test/jepsen-test env-config peer-config test-setup test version simple-gen)]
     (with-test-env [test-env [n-peers-total env-config peer-config]]
-      (let [setup-client (client/setup! client "onyx-unit" "n1")
-            history (reduce (fn [vs event]
-                              (conj vs event (client/invoke! setup-client test (gen/op simple-gen test 0))))
-                            []
-                            events)
-            results (check/check checker test model history)]
-        (println results)
-        (is (:valid? results))))))
+      (let [setup-client (client/setup! client "onyx-unit" "n1")]
+        (try
+          (let [history (reduce (fn [vs event]
+                                  (conj vs event (client/invoke! setup-client test (gen/op simple-gen test 0))))
+                                []
+                                events)
+                results (check/check checker test model history)]
+            (println results)
+            (is (:valid? results)))
+          (finally
+            (client/teardown! setup-client test)))))))

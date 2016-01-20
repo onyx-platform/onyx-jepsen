@@ -6,9 +6,9 @@
              [client :as client]
              [checker :as check]
              [generator :as gen]]
-            [onyx-jepsen.core :as oj]
             [onyx.test-helper :refer [load-config with-test-env]]
             [onyx-jepsen.simple-job :as simple-job]
+            [onyx-jepsen.onyx-test :as onyx-test]
             [onyx.plugin.bookkeeper]
             [onyx-peers.functions.functions]
             [onyx-peers.lifecycles.restart-lifecycle]
@@ -20,7 +20,7 @@
         config (load-config)
         env-config (assoc (:env-config config) :onyx/id id)
         peer-config (assoc (:peer-config config) :onyx/id id)
-        test "basic-clojure.test"
+        test "basic-clojure-test"
         version "dummy-version"
         test-setup {:job-params {:batch-size 1}
                     :nemesis :na
@@ -33,7 +33,6 @@
                     :n-peers 3}
         fake-clients 5
         n-peers-total (* fake-clients (:n-peers test-setup))
-        {:keys [client checker model generator] :as basic-test} (oj/basic-test env-config peer-config test-setup version)
         events [{:type :invoke :f :add :value 1}
                 {:type :invoke :f :add :value 2}
                 {:type :invoke :f :add :value 3}
@@ -49,13 +48,17 @@
                 {:type :invoke :f :close-ledgers-await-completion}
                 {:type :invoke :f :read-ledgers :task :persist}
                 {:type :invoke :f :read-peer-log :timeout 1000}]
-        simple-gen (gen/seq events)]
+        {:keys [client checker model generator] :as basic-test} 
+        (onyx-test/jepsen-test env-config peer-config test-setup test version (gen/seq events))]
     (with-test-env [test-env [n-peers-total env-config peer-config]]
-      (let [setup-client (client/setup! client "onyx-unit" "n1")
-            history (reduce (fn [vs event]
-                              (conj vs event (client/invoke! setup-client test (gen/op simple-gen test 0))))
-                            []
-                            events)
-            results (check/check checker test model history)]
-        (println results)
-        (is (:valid? results))))))
+      (let [setup-client (client/setup! client "onyx-unit" "n1")]
+        (try
+          (let [history (reduce (fn [vs event]
+                                  (conj vs event (client/invoke! setup-client test (gen/op generator test 0))))
+                                []
+                                events)
+                results (check/check checker test model history)]
+            (println results)
+            (is (:valid? results)))
+          (finally
+            (client/teardown! setup-client test)))))))
