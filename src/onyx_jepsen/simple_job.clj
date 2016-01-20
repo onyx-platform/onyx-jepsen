@@ -2,6 +2,8 @@
   (:require [onyx-peers.tasks.bookkeeper :refer [add-read-ledgers]]
             [taoensso.timbre :refer [info error debug fatal]]))
 
+
+
 (defn build-job [job-num {:keys [batch-size] :as params} zk-addr ledgers-root-path ledger-ids]
   (let [password (.getBytes "INSECUREDEFAULTPASSWORD")
         job {:catalog [{:onyx/name :persist
@@ -14,10 +16,12 @@
                         :bookkeeper/quorum-size 3
                         :bookkeeper/zookeeper-addr zk-addr
                         :bookkeeper/digest-type :mac
+                        :onyx/restart-pred-fn :onyx-peers.lifecycles.restart-lifecycle/restart?
                         :onyx/batch-size batch-size
                         :onyx/doc "Writes messages to a BookKeeper ledger"}
                        {:onyx/name :identity-log
                         :onyx/fn :onyx-peers.functions.functions/add-job-num
+                        :onyx/restart-pred-fn :onyx-peers.lifecycles.restart-lifecycle/restart?
                         :jepsen/job-num job-num
                         :onyx/params [:jepsen/job-num]
                         :onyx/type :function
@@ -36,10 +40,12 @@
   [job-num {:keys [batch-size] :as params} zk-addr ledgers-root-path ledger-ids]
   (let [password (.getBytes "INSECUREDEFAULTPASSWORD")
         job {:catalog [{:onyx/name :unwrap
+                        :onyx/restart-pred-fn :onyx-peers.lifecycles.restart-lifecycle/restart?
                         :onyx/fn :onyx-peers.functions.functions/unwrap
                         :onyx/type :function
                         :onyx/batch-size batch-size}
                        {:onyx/name :identity-log
+                        :onyx/restart-pred-fn :onyx-peers.lifecycles.restart-lifecycle/restart?
                         :onyx/fn :onyx-peers.functions.functions/add-job-num
                         ;:onyx/group-by-key :event-time 
                         :onyx/uniqueness-key :id
@@ -51,6 +57,7 @@
                         :onyx/batch-size batch-size}
                        {:onyx/name :persist
                         :onyx/plugin :onyx.plugin.bookkeeper/write-ledger
+                        :onyx/restart-pred-fn :onyx-peers.lifecycles.restart-lifecycle/restart?
                         :onyx/type :output
                         :onyx/medium :bookkeeper
                         :bookkeeper/serializer-fn :onyx.compression.nippy/zookeeper-compress
