@@ -9,17 +9,6 @@
             [jepsen.core :as jc]
             [jepsen.control :as c]))
 
-(comment (def info (:information (:job-invariants (read-string (slurp "/Users/lucas/clojure/onyx-jepsen/store/onyx-aggregation-test/20160120T180742.000Z/results.edn")))))
-
-         (def read-values (:read-values info))
-
-         (def not-triggered (set (:added-not-triggered info)))
-
-         (identity not-triggered)
-         (keys info)
-         (count read-values)
-         (count not-triggered))
-
 (def version
   "What onyx version should we test?"
   "version-not-supplied")
