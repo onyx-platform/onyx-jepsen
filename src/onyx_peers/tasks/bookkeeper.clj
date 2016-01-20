@@ -17,6 +17,7 @@
                          :onyx/plugin :onyx.plugin.bookkeeper/read-ledgers
                          :onyx/type :input
                          :onyx/medium :bookkeeper
+                         :onyx/restart-pred-fn :onyx-peers.lifecycles.restart-lifecycle/restart?
                          ;; TODO: Vary pending timeout in different Jepsen tests
                          :onyx/pending-timeout 10000
                          ;; TODO: Vary read max chunk in different tests
