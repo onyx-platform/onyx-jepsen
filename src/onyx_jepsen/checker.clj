@@ -100,15 +100,16 @@
                          set)
         diff-added-read (clojure.set/difference added-values read-values)
         all-added-read? (empty? diff-added-read)
-        all-added-triggered? (empty? 
-                               (clojure.set/difference added-values 
-                                                       (->> final-window-state-write
-                                                            (map #(dissoc % :job-num))
-                                                            set)))
+        written-not-triggered (clojure.set/difference added-values 
+                                                      (->> final-window-state-write
+                                                           (map #(dissoc % :job-num))
+                                                           set))
+        all-added-triggered? (empty? written-not-triggered)
         unacked-writes-read (clojure.set/difference read-values added-values)]
     {:information {:read-values read-values
                    :diff-added-read diff-added-read
                    :unacknowledged-writes-read unacked-writes-read
+                   :added-not-triggered written-not-triggered
                    :job-exception-message (some-> exception (.getMessage))
                    :job-exception-trace (if exception 
                                           (with-out-str (clojure.stacktrace/print-stack-trace exception)))}

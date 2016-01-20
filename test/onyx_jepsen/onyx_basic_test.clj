@@ -24,6 +24,7 @@
 
 (def test-setup 
   {:job-params {:batch-size 1}
+   :job-type :simple-job
    :nemesis :random-halves ; :bridge-shuffle or :random-halves
    :awake-mean 200
    :stopped-mean 100
@@ -33,11 +34,11 @@
    ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
    :n-peers 3})
 
-(defn generator [{:keys [time-limit awake-mean stopped-mean n-jobs job-params] :as test-setup}]
+(defn generator [{:keys [job-type time-limit awake-mean stopped-mean n-jobs job-params] :as test-setup}]
   (gen/phases
     (->> (onyx-gen/filter-new identity 
-                              (onyx-gen/frequency [(onyx-gen/adds) 
-                                                   (onyx-gen/submit-job-gen n-jobs job-params)
+                              (onyx-gen/frequency [(onyx-gen/adds (range)) 
+                                                   (onyx-gen/submit-job-gen job-type n-jobs job-params)
                                                    ;(gen/once (gc-peer-logs))
                                                    ]
                                                   [0.99

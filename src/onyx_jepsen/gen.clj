@@ -51,8 +51,8 @@
 
 (defn adds
   "Generator that emits :add operations for sequential integers."
-  []
-  (->> (range)
+  [values]
+  (->> values
        (map (fn [x] {:type :invoke, :f :add, :value x}))
        gen/seq))
 
@@ -65,7 +65,7 @@
 
 (defn read-ledgers-gen
   [task-name]
-  (gen/clients (gen/once {:type :invoke :f :read-ledgers :value task-name})))
+  (gen/clients (gen/once {:type :invoke :f :read-ledgers :task task-name})))
 
 (defn read-peer-log-gen
   []
@@ -75,11 +75,12 @@
   []
   (gen/clients (gen/once {:type :invoke :f :close-ledgers-await-completion})))
 
-(defn submit-job-gen [n-jobs job-params]
+(defn submit-job-gen [job-type n-jobs job-params]
   (->> (range n-jobs)
        (map (fn [n] 
               {:type :invoke 
                :f :submit-job 
+               :job-type job-type
                :job-num n
                :n-jobs n-jobs
                :params job-params}))

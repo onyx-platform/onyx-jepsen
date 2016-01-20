@@ -46,6 +46,7 @@
         test "basic-clojure.test"
         version "dummy-version"
         test-setup {:job-params {:batch-size 1}
+                    :job-type :window-state-job
                     :nemesis :na
                     :time-limit 800 ; unused in this test
                     :awake-mean 200 ; unused in this test
@@ -61,7 +62,7 @@
                            input)
                      [{:type :invoke 
                        :f :submit-job 
-                       :job-type :window-state-job 
+                       :job-type (:job-type test-setup) 
                        :job-num 0 
                        :n-jobs (:n-jobs test-setup) 
                        :params (:job-params test-setup)}
