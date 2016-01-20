@@ -11,6 +11,7 @@
 (defn update-state-log [{:keys [bookkeeper/ledger-handle] :as event} 
                         window 
                         trigger 
-                        {:keys [window-id upper-bound lower-bound]} 
+                        {:keys [window-id upper-bound lower-bound context]} 
                         state]
-  (.addEntry ledger-handle (nippy/zookeeper-compress [lower-bound upper-bound state])))
+  (when (= :task-complete context) 
+    (.addEntry ledger-handle (nippy/zookeeper-compress [lower-bound upper-bound state]))))
