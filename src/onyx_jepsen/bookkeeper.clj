@@ -11,7 +11,7 @@
             [onyx.state.log.bookkeeper :as obk]
             [onyx.compression.nippy :as nippy]                                                                                                             
             [knossos.op :as op]
-            [jepsen.control.util :refer [grepkill]]
+            [jepsen.control.util]
             [jepsen [client :as client]
              [core :as jepsen]
              [model :as model]
@@ -26,8 +26,7 @@
             [jepsen.control.net :as cn]
             [jepsen.os.debian :as debian])
 
-  (:import [org.apache.bookkeeper.client LedgerHandle LedgerEntry BookKeeper BookKeeper$DigestType AsyncCallback$AddCallback]
-           [knossos.core Model]))
+  (:import [org.apache.bookkeeper.client LedgerHandle LedgerEntry BookKeeper BookKeeper$DigestType AsyncCallback$AddCallback]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; BookKeeper only test code
@@ -240,12 +239,6 @@
        :unacknowledged-writes-read unacked-writes-read
        :all-written-read? (empty? all-written-read?)})))
 
-(defrecord OnyxModel []
-  Model
-  (step [r op]
-    (info "Stepping " op)
-    r))
-
 (defn read-ledger
   []
   (gen/clients (gen/once {:type :invoke :f :read-ledger})))
@@ -257,7 +250,7 @@
          {:os debian/os
           :db (setup version)
           :client (write-log-client)
-          :model (->OnyxModel)
+          :model model/noop
           :checker (->Checker)
           :generator (gen/phases
                        (->> (adds) 

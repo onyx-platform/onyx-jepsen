@@ -1,13 +1,13 @@
 (ns onyx-jepsen.onyx-basic-test
   (:require [clojure.test :refer :all]
-            [onyx-jepsen.onyx-test :as onyx-test]
-            [jepsen 
-             [client :as client]
-             [checker :as check]
-             [generator :as gen]]
-            [onyx-jepsen.gen :as onyx-gen]
             [jepsen.core :as jc]
-            [jepsen.control :as c]))
+            [jepsen.generator :as gen]
+            [onyx-jepsen.gen :as onyx-gen]
+            [onyx-jepsen.onyx-test :as onyx-test]
+            ;; Peers requires
+            [onyx.plugin.bookkeeper]
+            [onyx-peers.functions.functions]
+            [onyx-peers.lifecycles.restart-lifecycle]))
 
 (def version
   "What onyx version should we test?"

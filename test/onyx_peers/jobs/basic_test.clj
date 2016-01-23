@@ -12,6 +12,8 @@
             [onyx.plugin.bookkeeper]
             [onyx-peers.functions.functions]
             [onyx-peers.lifecycles.restart-lifecycle]
+            [onyx.lifecycle.metrics.timbre]
+            [onyx.lifecycle.metrics.metrics]
             [taoensso.timbre :refer [fatal info]]
             [onyx.api]))
 

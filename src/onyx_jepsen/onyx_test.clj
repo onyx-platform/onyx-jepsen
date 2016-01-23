@@ -10,8 +10,9 @@
             [onyx-jepsen.checker :as onyx-checker]
             [onyx-jepsen.onyx-client :as onyx-client]
 
+            [jepsen.model]
             [knossos.op :as op]
-            [jepsen.control.util :refer [grepkill]]
+            [jepsen.control.util]
             [jepsen [client :as client]
              [core :as jepsen]
              [model :as model]
@@ -25,8 +26,7 @@
             [jepsen.control.util :as cu]
             [jepsen.control.net :as net]
             [jepsen.os :as os]
-            [jepsen.os.debian :as debian])
-  (:import [knossos.core Model]))
+            [jepsen.os.debian :as debian]))
 
 (defn zk-node-ids
   "We number nodes in reverse order so the leader is the first node. Returns a
@@ -101,12 +101,6 @@
 
     (teardown! [_ test node]))) 
 
-;; Doesn't do anything yet
-(defrecord OnyxModel []
-  Model
-  (step [r op]
-    r))
-
 (defn jepsen-test
   "A simple test of Onyx's safety. Supply your own generator for your test"
   [env-config peer-config test-setup name version generator]
@@ -116,7 +110,7 @@
             :db (setup test-setup version)
             :name name
             :client (onyx-client/write-log-client env-config peer-config (atom {}) (atom []) (atom []))
-            :model (->OnyxModel) ;; Currently not actually used for anything
+            :model jepsen.model/noop
             :checker (onyx-checker/->Checker peer-config n-peers n-jobs)
             :generator generator 
             :nemesis (case (:nemesis test-setup) 

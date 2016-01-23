@@ -1,42 +1,16 @@
 (ns onyx-jepsen.onyx-client
   "Tests for Onyx"
-  (:require [clojure.tools.logging :refer :all]
-            [knossos.core :as knossos]
-            [clojure.core.reducers :as r]
-            [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.pprint :refer [pprint]]
-
-            ;; Onyx!
-            [onyx.state.log.bookkeeper :as obk]
-            [onyx.log.zookeeper]
-            [onyx.compression.nippy :as nippy]
-            [onyx.api]
-            [onyx.extensions]
-            [onyx.system]
+  (:require [clojure.core.async :as casync :refer [alts!! chan]]
+            [clojure.tools.logging :refer :all]
             [com.stuartsierra.component :as component]
-            [onyx.plugin.bookkeeper]
+            [jepsen.client :as client]
+            [jepsen.util :refer [timeout]]
             [onyx-jepsen.simple-job :as simple-job]
-            [onyx-jepsen.gen :as onyx-gen]
-            [clojure.core.async :as casync :refer [chan >!! <!! close! alts!!]]
-            [knossos.op :as op]
-            [jepsen.control.util :refer [grepkill]]
-            [jepsen [client :as client]
-             [core :as jepsen]
-             [model :as model]
-             [db :as db]
-             [tests :as tests]
-             [control :as c :refer [|]]
-             [checker :as checker]
-             [nemesis :as nemesis]
-             [generator :as gen]
-             [util :refer [timeout meh]]]
-            [jepsen.control.util :as cu]
-            [jepsen.control.net :as net]
-            [jepsen.os :as os]
-            [jepsen.os.debian :as debian])
-
-  (:import [org.apache.bookkeeper.client LedgerHandle LedgerEntry BookKeeper BookKeeper$DigestType AsyncCallback$AddCallback]))
+            [onyx.api]
+            [onyx.plugin.bookkeeper]
+            [onyx.compression.nippy :as nippy]
+            [onyx.state.log.bookkeeper :as obk])
+  (:import (org.apache.bookkeeper.client LedgerEntry LedgerHandle)))
 
 (defn bookkeeper-client [env-config]
   (obk/bookkeeper env-config))

@@ -5,17 +5,21 @@
              [client :as client]
              [checker :as check]
              [generator :as gen]]
-            [onyx.plugin.core-async :refer [take-segments!]]
             [onyx.log.zookeeper :as zk]
             [onyx-jepsen.onyx-test :as onyx-test]
             [onyx-jepsen.simple-job :as simple-job]
-            [onyx.compression.nippy :as nippy]
-            [onyx-peers.functions.functions]
-            [onyx.plugin.bookkeeper]
-            [onyx-peers.lifecycles.restart-lifecycle]
             [onyx.test-helper :refer [load-config with-test-env]]
             [taoensso.timbre :refer [fatal info]]
-            [onyx.api]))
+            [onyx.api]
+
+            ;; Peer requires
+            [onyx.compression.nippy :as nippy]
+            [onyx-peers.functions.functions]
+            [onyx.plugin.core-async :refer [take-segments!]]
+            [onyx.plugin.bookkeeper]
+            [onyx-peers.lifecycles.restart-lifecycle]
+            [onyx.lifecycle.metrics.timbre]
+            [onyx.lifecycle.metrics.metrics]))
 
 (def input
   [{:id 1  :age 21 :event-time #inst "2015-09-13T03:00:00.829-00:00"}
