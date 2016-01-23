@@ -107,7 +107,7 @@
                                   (catch Throwable t
                                     (assoc op :type :info :value t))))
 
-        :close-ledgers-await-completion (timeout 2000000
+        :close-ledgers-await-completion (timeout 1000000
                                                  (assoc op :type :info :value :timed-out)
                                                  (try
                                                    (assoc op 
