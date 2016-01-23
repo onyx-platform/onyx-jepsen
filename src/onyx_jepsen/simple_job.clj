@@ -2,8 +2,6 @@
   (:require [onyx-peers.tasks.bookkeeper :refer [add-read-ledgers]]
             [taoensso.timbre :refer [info error debug fatal]]))
 
-
-
 (defn build-job [job-num {:keys [batch-size] :as params} zk-addr ledgers-root-path ledger-ids]
   (let [password (.getBytes "INSECUREDEFAULTPASSWORD")
         job {:catalog [{:onyx/name :persist
@@ -26,7 +24,13 @@
                         :onyx/params [:jepsen/job-num]
                         :onyx/type :function
                         :onyx/batch-size batch-size}]
-             :lifecycles [{:lifecycle/task :persist
+             :lifecycles [{:lifecycle/task :all 
+                           :lifecycle/calls :onyx.lifecycle.metrics.metrics/calls
+                           :metrics/buffer-capacity 10000
+                           :metrics/workflow-name "simple-job"
+                           :metrics/sender-fn :onyx.lifecycle.metrics.timbre/timbre-sender
+                           :lifecycle/doc "Instruments a task's metrics to timbre"}
+                          {:lifecycle/task :persist
                            :lifecycle/calls :onyx-peers.lifecycles.restart-lifecycle/restart-calls}
                           {:lifecycle/task :identity-log
                            :lifecycle/calls :onyx-peers.lifecycles.restart-lifecycle/restart-calls}
@@ -79,7 +83,15 @@
                          :trigger/fire-all-extents? true
                          :trigger/threshold [1 :elements]
                          :trigger/sync :onyx-peers.functions.functions/update-state-log}]
-             :lifecycles [{:lifecycle/task :persist
+             :lifecycles [{:lifecycle/task :all 
+                           :lifecycle/calls :onyx.lifecycle.metrics.metrics/calls
+                           :metrics/buffer-capacity 10000
+                           :metrics/workflow-name "window-state-job"
+                           :metrics/sender-fn :onyx.lifecycle.metrics.timbre/timbre-sender
+                           :lifecycle/doc "Instruments a task's metrics to timbre"}
+                          {:lifecycle/task :persist
+                           :lifecycle/calls :onyx-peers.lifecycles.restart-lifecycle/restart-calls}
+                          {:lifecycle/task :unwrap
                            :lifecycle/calls :onyx-peers.lifecycles.restart-lifecycle/restart-calls}
                           {:lifecycle/task :identity-log
                            :lifecycle/calls :onyx-peers.lifecycles.restart-lifecycle/restart-calls}

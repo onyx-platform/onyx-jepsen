@@ -5,6 +5,8 @@
             ;[onyx-peers.lifecycles.lifecycle]
             [onyx-peers.functions.functions]
             [onyx-peers.lifecycles.restart-lifecycle]
+            [onyx.lifecycle.metrics.timbre]
+            [onyx.lifecycle.metrics.metrics]
             [taoensso.timbre :refer [info error debug fatal]]
             [onyx.compression.nippy :as nippy]
             [onyx.plugin.bookkeeper]
