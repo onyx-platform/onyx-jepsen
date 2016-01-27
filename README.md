@@ -32,7 +32,7 @@ eval "$(docker-machine env jepsen-onyx)"
 
 4. Uberjar peers and start docker in docker instance:
 ```
-scripts/start-containers.sh
+script/start-containers.sh
 ```
 
 5. Run from inside docker in docker.
