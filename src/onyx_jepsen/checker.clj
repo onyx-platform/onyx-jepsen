@@ -7,6 +7,7 @@
             [clojure.stacktrace]
             [com.stuartsierra.component :as component]
             [onyx.log.replica :as replica]
+            [taoensso.timbre :as timbre]
             [clojure.core.async :as casync :refer [chan >!! <!! close! alts!!]]
             [clojure.tools.logging :refer :all]))
 
@@ -85,8 +86,11 @@
   (let [exception (job-exception log-conn final-replica)
         ledger-reads (first (history->read-ledgers history :persist))
         trigger-ledger-reads (first (history->read-ledgers history :identity-log))
-        ;; grab only job 0's ledgers for now
-        final-window-state-write (last (last (:results (last (get (:value trigger-ledger-reads) 0)))))
+        final-window-state-write (->> (get (:value trigger-ledger-reads) 0) ;; only one job in this test
+                                      (map (comp first :results)) ;; only one write per ledger
+                                      (sort-by first) ;; Grab last written trigger call i.e. highest timestamp
+                                      last
+                                      last)
         window-state-filtered? (= (sort-by :id final-window-state-write) 
                                   (sort-by :id (set final-window-state-write)))
         ledger-read-results (ledger-reads->job+reads ledger-reads)
@@ -114,7 +118,9 @@
                    :job-exception-trace (if exception 
                                           (with-out-str (clojure.stacktrace/print-stack-trace exception)))}
      :invariants {:window-state-filtered? window-state-filtered?
-                  :job-completed? (nil? exception)
+                  :jobs-completed? (and (nil? exception) 
+                                        (= (count (:completed-jobs final-replica))
+                                           n-jobs))
                   :reads-correct-jobs? correct-jobs?
                   :all-added-triggered? all-added-triggered?
                   :all-added-read? all-added-read?}}))
@@ -156,7 +162,7 @@
                               :information {:pulse-peers pulse-peers
                                             :peer-log peer-log-reads
                                             :final-replica final-replica}}
-
+          ;; Job invariants
           job-invariants-fn (case (history->job-name history)
                               :simple-job simple-job-invariants 
                               :window-state-job window-state-job-invariants)

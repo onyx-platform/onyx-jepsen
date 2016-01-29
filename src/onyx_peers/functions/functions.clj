@@ -14,4 +14,8 @@
                         {:keys [window-id upper-bound lower-bound context]} 
                         state]
   (when (= :task-complete context) 
-    (.addEntry ledger-handle (nippy/zookeeper-compress [lower-bound upper-bound state]))))
+    (let [compressed (nippy/zookeeper-compress [(java.util.Date.) lower-bound upper-bound state])
+          n-bytes (count compressed)] 
+      (info "task complete:" (.getId ledger-handle) n-bytes "bytes" [lower-bound upper-bound (map :id state)])
+      (.addEntry ledger-handle compressed)
+      (info "task complete successfully wrote" n-bytes "bytes"))))
