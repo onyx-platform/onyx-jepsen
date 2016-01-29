@@ -19,7 +19,8 @@ cp test-output.log store/latest/
 
 for i in n1 n2 n3 n4 n5; 
 do 
-	scp $i:/onyx.log store/latest/onyx-$i.log; 
+	mkdir store/latest/$i"_logs"
+	scp $i:/onyx.log\* store/latest/$i"_logs"/;
 	scp $i:/myrecording.jfr store/latest/recording-$i.jfr; 
 	scp $i:/peers-out.log store/latest/peers-out-$i.log; 
 done
