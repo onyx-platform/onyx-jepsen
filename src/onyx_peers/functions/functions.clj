@@ -13,7 +13,7 @@
                         trigger 
                         {:keys [window-id upper-bound lower-bound context]} 
                         state]
-  (when (= :task-complete context) 
+  (when (= :task-lifecycle-stopped context) 
     (let [compressed (nippy/zookeeper-compress [(java.util.Date.) lower-bound upper-bound state])
           n-bytes (count compressed)] 
       (info "task complete:" (.getId ledger-handle) n-bytes "bytes" [lower-bound upper-bound (map :id state)])
