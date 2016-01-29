@@ -7,6 +7,3 @@
 
 (def restart-calls
   {:lifecycle/handle-exception handle-exception})
-
-(def restart? 
-  (constantly true))
