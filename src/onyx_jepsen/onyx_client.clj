@@ -124,14 +124,7 @@
                                (try
                                  (assoc op 
                                         :type :ok 
-                                        :value (into {} 
-                                                     (map (fn [[job-num job-data]] 
-                                                            (vector job-num 
-                                                                    (mapv (partial read-ledger-entries env-config) 
-                                                                          (get-written-ledgers onyx-client job-data onyx-id (:task op)))))
-                                                          @jobs-data))
-                                        
-                                        #_(read-task-ledgers onyx-client ))
+                                        :value (read-task-ledgers onyx-client env-config @jobs-data onyx-id (:task op)))
                                  (catch Throwable t
                                    (assoc op :type :info :value t))))
 
