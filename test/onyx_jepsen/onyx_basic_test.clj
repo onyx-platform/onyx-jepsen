@@ -3,11 +3,7 @@
             [jepsen.core :as jc]
             [jepsen.generator :as gen]
             [onyx-jepsen.gen :as onyx-gen]
-            [onyx-jepsen.onyx-test :as onyx-test]
-            ;; Peers requires
-            [onyx.plugin.bookkeeper]
-            [onyx-peers.functions.functions]
-            [onyx-peers.lifecycles.restart-lifecycle]))
+            [onyx-jepsen.onyx-test :as onyx-test]))
 
 (def version
   "What onyx version should we test?"
