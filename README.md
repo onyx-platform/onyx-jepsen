@@ -11,16 +11,19 @@ To run:
    running your tests as you may end up downloading a snapshot jar from
    clojars.
 
-2. If not using Linux, setup docker machine:
+2. If not using Linux, install [Docker Machine](https://docs.docker.com/machine/).
+
+Then create a new "machine":
+
+#### VMware Fusion instructions
 
 Tune disk size, memory size and cpu counts to taste.
 
-VMware fusion instructions:
 ```
 docker-machine create --driver vmwarefusion --vmwarefusion-disk-size 50000 --vmwarefusion-memory-size 20000 --vmwarefusion-cpu-count "6" jepsen-onyx
 ```
 
-Virtualbox instructions (untested, must support file sharing):
+#### VirtualBox instructions (untested, must support file sharing):
 ```
 docker-machine create --driver virtualbox --virtualbox-disk-size 50000 --virtualbox-memory 20000 jepsen-onyx
 ```
