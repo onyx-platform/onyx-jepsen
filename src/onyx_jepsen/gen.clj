@@ -86,11 +86,11 @@
                :params job-params}))
        gen/seq))
 
-(defn start-stop-nemesis-seq [awake-mean stopped-mean]
+(defn start-stop-nemesis-seq [awake-ms stopped-ms]
   (gen/seq 
     (mapcat (fn [_] 
-              [(gen/sleep (rand-int (* 2 stopped-mean)))
+              [(gen/sleep stopped-ms)
                {:type :info :f :start}
-               (gen/sleep (rand-int (* 2 awake-mean)))
+               (gen/sleep awake-ms)
                {:type :info :f :stop}]) 
             (range))))

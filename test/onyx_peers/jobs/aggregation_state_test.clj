@@ -71,9 +71,13 @@
                        :n-jobs (:n-jobs test-setup) 
                        :params (:job-params test-setup)}
                       {:type :invoke :f :close-ledgers-await-completion}
+                      ;; Read back peer-log first, and increase timeout
+                      ;; because we need to give more time for the trigger to write out
+                      ;; Reduce the timeout when we have some way to determine whether the trigger completed
+                      ;; i.e. a peer signal that it's finished everything related to the job
+                      {:type :invoke :f :read-peer-log :timeout 2000}
                       {:type :invoke :f :read-ledgers :task :persist}
-                      {:type :invoke :f :read-ledgers :task :identity-log}
-                      {:type :invoke :f :read-peer-log :timeout 1000}])
+                      {:type :invoke :f :read-ledgers :task :identity-log}])
         simple-gen (gen/seq events)
         {:keys [client checker model generator] :as basic-test} (onyx-test/jepsen-test env-config peer-config test-setup test version simple-gen)]
     (with-test-env [test-env [n-peers-total env-config peer-config]]
