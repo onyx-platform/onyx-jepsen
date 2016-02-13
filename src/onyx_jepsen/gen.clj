@@ -1,6 +1,9 @@
 (ns onyx-jepsen.gen
-  (:require [jepsen [client :as client]
-             [generator :as gen]]))
+  (:require 
+    [clojure.tools.logging :refer :all]
+    [jepsen 
+     [client :as client]
+     [generator :as gen]]))
 
 ;; TODO, only emit after n secs has passed since first invocation
 ;; afterwards, wait for n secs again
@@ -86,11 +89,25 @@
                :params job-params}))
        gen/seq))
 
-(defn start-stop-nemesis-seq [awake-ms stopped-ms]
+(defn start-stop-nemesis-seq [awake-secs stopped-secs]
   (gen/seq 
     (mapcat (fn [_] 
-              [(gen/sleep stopped-ms)
+              [(gen/sleep awake-secs)
                {:type :info :f :start}
-               (gen/sleep awake-ms)
+               (gen/sleep stopped-secs)
                {:type :info :f :stop}]) 
             (range))))
+
+; (defn kill-resurrect-nemesis-seq [awake-ms stopped-ms]
+;   (gen/seq 
+;     (mapcat (fn [_] 
+;               [{:type :info :f :kill}
+;                (gen/sleep stopped-ms)
+;                {:type :info :f :resurrect}
+;                (gen/sleep awake-ms)]) 
+;             (range))))
+
+; (defn final-resurrect-seq []
+;   (gen/seq
+;     [(gen/once {:type :info :f :kill})
+;      (gen/once {:type :info :f :resurrect})]))

@@ -125,15 +125,15 @@
                   :all-added-triggered? all-added-triggered?
                   :all-added-read? all-added-read?}}))
 
-(defn history->job-name [history]
-  (:job-type (first (filter (fn [action]
-                              (and (= (:f action) :submit-job)
-                                   (= (:type action) :ok)))
-                            history))))
+; (defn history->job-name [history]
+;   (:job-type (first (filter (fn [action]
+;                               (and (= (:f action) :submit-job)
+;                                    (= (:type action) :ok)))
+;                             history))))
 
 ;; TODO, check whether the jobs were even submitted, if not, nothing should be read back 
 ;; important for short running tests
-(defrecord Checker [peer-config n-peers n-jobs]
+(defrecord Checker [test-setup peer-config n-peers n-jobs]
   checker/Checker
   (check [checker test model history]
     (let [;;;;;;;;;
@@ -156,6 +156,7 @@
           prepared-empty? (empty? (:prepared final-replica))
 
           invariants-cluster {:invariants {:all-peers-up? all-peers-up? 
+                                           :read-whole-log-back? (< (count peer-log-reads) 50000)
                                            :peers-match-pulses? peers-match-pulses? 
                                            :accepting-empty? accepting-empty? 
                                            :prepared-empty? prepared-empty?}
@@ -163,9 +164,10 @@
                                             :peer-log peer-log-reads
                                             :final-replica final-replica}}
           ;; Job invariants
-          job-invariants-fn (case (history->job-name history)
+          job-invariants-fn (case (:job-type test-setup)
                               :simple-job simple-job-invariants 
-                              :window-state-job window-state-job-invariants)
+                              :window-state-job window-state-job-invariants
+                              :no-job (constantly {:information {} :invariants {}}))
           invariants-job (job-invariants-fn log-conn history final-replica n-jobs)
           invariants [invariants-job invariants-cluster]]
       (component/stop peer-client)

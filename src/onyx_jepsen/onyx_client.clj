@@ -66,14 +66,18 @@
                       ledger-ids)
        job-num))
 
+(def max-entries 50000)
+
 (defn read-peer-log [log timeout-ms]
   (let [ch (chan 1000)] 
     (onyx.extensions/subscribe-to-log log ch)
     (loop [entries []]
-      (if-let [entry (first (alts!! [ch (casync/timeout timeout-ms)]))]
-        (do (info "LOG ENTRY:" entry)
-            (recur (conj entries entry)))
-        entries))))
+      (if (= 50000 (count entries)) 
+        entries
+        (if-let [entry (first (alts!! [ch (casync/timeout timeout-ms)]))]
+          (do (info "LOG ENTRY:" entry)
+              (recur (conj entries entry)))
+          entries)))))
 
 (defn read-task-ledgers [onyx-client env-config jobs onyx-id task-name]
   (into {} 
@@ -82,6 +86,30 @@
                        (mapv (partial read-ledger-entries env-config) 
                              (get-written-ledgers onyx-client job-data onyx-id task-name))))
              jobs)))
+
+(defrecord PeerReadClient [env-config peer-config onyx-client]
+  client/Client
+  (setup! [this test node]
+    (let [onyx-client (component/start (onyx.system/onyx-client peer-config))]
+      (assoc this :onyx-client onyx-client)))
+
+  (invoke! [this test op]
+    (case (:f op)
+      :nothing (assoc op :type :ok)
+      :read-peer-log (timeout 1000000
+                              (assoc op :type :info :value :timed-out)
+                              (try
+                                (assoc op 
+                                       :type :ok 
+                                       :value (read-peer-log (:log onyx-client) (or (:timeout-ms op) 20000)))
+                                (catch Throwable t
+                                  (assoc op :type :info :value t))))))
+
+  (teardown! [_ test]
+    (component/stop onyx-client)))
+
+(defn new-peer-read-client [env-config peer-config]
+  (->PeerReadClient env-config peer-config nil))
 
 ;; TODO, merge jobs-data, ledger-handles, and ledger-ids atoms into one big atom map
 (defrecord WriteLogClient [env-config peer-config client jobs-data ledger-handles ledger-handle ledger-ids onyx-client]
