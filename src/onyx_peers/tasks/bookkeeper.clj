@@ -3,7 +3,7 @@
 
 (defn add-read-ledgers [job to-task batch-size zk-addr ledgers-root-path password ledger-ids]
   (let [read-ledger-task-names (mapv (fn [id]
-                                       (keyword (str "read-ledger" id)))
+                                       (keyword (str "read-ledger-" id)))
                                      ledger-ids)]
     (-> job 
         (update :workflow
