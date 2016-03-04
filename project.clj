@@ -4,7 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.onyxplatform/onyx "0.8.11-SNAPSHOT" :exclusions [org.slf4j/slf4j-nop]]
+                 [org.onyxplatform/onyx "0.8.12-SNAPSHOT" :exclusions [org.slf4j/slf4j-nop]]
                  ;[org.onyxplatform/onyx "0.8.10-alpha2" :exclusions [org.slf4j/slf4j-nop]]
                  [fipp "0.6.4"]
                  [org.onyxplatform/onyx-metrics "0.8.8.0"]

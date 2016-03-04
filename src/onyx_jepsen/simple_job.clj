@@ -75,7 +75,7 @@
                             :window/window-key :event-time}]
                  :triggers [{:trigger/window-id :collect-segments
                              :trigger/refinement :onyx.triggers.refinements/accumulating
-                             :trigger/on :segment
+                             :trigger/on :onyx.triggers.triggers/segment
                              :trigger/threshold [1 :elements]
                              :trigger/sync :onyx-peers.functions.functions/update-state-log}]
                  :lifecycles [{:lifecycle/task :all 

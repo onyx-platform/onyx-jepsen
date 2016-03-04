@@ -68,7 +68,7 @@
                                               (:nodes test)))))
 
 (def bk-ledger-path
-  (str "zkLedgersRootPath=/ledgers" #_(:onyx/id env-config)))
+  (str "zkLedgersRootPath=/ledgers" #_(:onyx/tenancy-id env-config)))
 
 (defn setup 
   "Sets up and tears down Onyx"

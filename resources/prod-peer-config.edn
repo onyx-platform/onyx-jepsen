@@ -4,7 +4,7 @@
  ;:onyx.zookeeper/backoff-base-sleep-time-ms 1000
  ;:onyx.zookeeper/backoff-max-sleep-time-ms 30000
  ;:onyx.zookeeper/backoff-max-retries 5
- :onyx/id "JEPSENONYXID"
+ :onyx/tenancy-id "JEPSENONYXID"
  ;; Change "localhost" to a resolvable hostname
  ;; by any node in your cluster.
  :onyx.messaging/bind-addr "localhost"

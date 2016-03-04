@@ -124,7 +124,7 @@
 
   (invoke! [this test op]
     (let [zk-addr (:zookeeper/address env-config)
-          onyx-id (:onyx/id env-config)] 
+          onyx-id (:onyx/tenancy-id env-config)] 
       (case (:f op)
         :read-peer-log (timeout 1000000
                                 (assoc op :type :info :value :timed-out)

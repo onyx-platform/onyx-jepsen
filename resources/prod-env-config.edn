@@ -1,5 +1,5 @@
 {:zookeeper/address "n1:2181,n2:2181,n3:2181,n4:2181,n5:2181"
- :onyx/id "JEPSENONYXID"
+ :onyx/tenancy-id "JEPSENONYXID"
  :onyx.bookkeeper/server? true
  :onyx.bookkeeper/port 3196
  :onyx.bookkeeper/ledger-ensemble-size 3

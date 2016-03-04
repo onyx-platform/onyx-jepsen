@@ -45,8 +45,8 @@
 (deftest ^:test-jepsen-tests aggregation-state-test
   (let [id (java.util.UUID/randomUUID)
         config (load-config)
-        env-config (assoc (:env-config config) :onyx/id id)
-        peer-config (assoc (:peer-config config) :onyx/id id)
+        env-config (assoc (:env-config config) :onyx/tenancy-id id)
+        peer-config (assoc (:peer-config config) :onyx/tenancy-id id)
         test "basic-clojure.test"
         version "dummy-version"
         test-setup {:job-params {:batch-size 1}

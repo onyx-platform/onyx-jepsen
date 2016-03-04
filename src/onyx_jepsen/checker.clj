@@ -23,7 +23,7 @@
           peer-log-reads))
 
 (defn pulses [conn peer-config]
-  (onyx.log.curator/children conn (onyx.log.zookeeper/pulse-path (:onyx/id peer-config))))
+  (onyx.log.curator/children conn (onyx.log.zookeeper/pulse-path (:onyx/tenancy-id peer-config))))
 
 (defn history->read-ledgers [history task-name]
   (filter (fn [action]

@@ -9,15 +9,14 @@
   (:value segment))
 
 (defn update-state-log [{:keys [bookkeeper/ledger-handle] :as event} 
-                        window 
-                        trigger 
-                        opts
-                        state]
-  (when (= :task-lifecycle-stopped (:context opts)) 
-    (let [extent-value (first (vals state))
-          value [(java.util.Date.) extent-value]
+                        window
+                        trigger
+                        state-event
+                        extent-state]
+  (when (= :task-lifecycle-stopped (:event-type state-event)) 
+    (let [value [(java.util.Date.) extent-state]
           compressed (nippy/zookeeper-compress value)
           n-bytes (count compressed)] 
-      (info "task complete:" (.getId ledger-handle) n-bytes "bytes" [(java.util.Date.) (map :id extent-value)])
+      (info "task complete:" (.getId ledger-handle) n-bytes "bytes" [(java.util.Date.) (map :id extent-state)])
       (.addEntry ledger-handle compressed)
       (info "task complete successfully wrote" n-bytes "bytes"))))
