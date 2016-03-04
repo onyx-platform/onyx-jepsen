@@ -79,6 +79,7 @@ onyx:
 * [Ensure peer restarts after ZooKeeper connection loss/errors #423] (https://github.com/onyx-platform/onyx/issues/423) Resolved.
 * [BookKeeper state log / key filter interaction issue #382] (https://github.com/onyx-platform/onyx/issues/382) Known, but theoretical issue, proven to be an issue by jepsen. Resolved.
 * [Failed async BookKeeper writes should cause peer to to restart #390] (https://github.com/onyx-platform/onyx/issues/390) Known issue, but shown to be resolved by jepsen.
+* [Boot out dead peers when the replica doesn't reflect the cluster state. #526](https://github.com/onyx-platform/onyx/pull/526) Kill -9 test 
 
 onyx-bookkeeper plugin:
 * [Handle case where peer is restored, but all messages fully acked #4] (https://github.com/onyx-platform/onyx-bookkeeper/issues/4) Unresolved, low priority.
