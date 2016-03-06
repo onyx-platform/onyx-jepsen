@@ -262,7 +262,7 @@
                                           {:type :info :f :start}
                                           (gen/sleep 200)
                                           {:type :info :f :stop}])))
-                            (gen/time-limit 800)) 
+                            (gen/time-limit 400)) 
                        (read-ledger))
           ;:nemesis (nemesis/partitioner (comp nemesis/bridge shuffle))
           :nemesis (nemesis/partition-random-halves)}))

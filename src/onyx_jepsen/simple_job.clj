@@ -17,7 +17,7 @@
                             :bookkeeper/digest-type :mac
                             :onyx/batch-size batch-size
                             :onyx/doc "Writes messages to a BookKeeper ledger"}
-                           {:onyx/name :identity-log
+                           {:onyx/name :annotate-job
                             :onyx/fn :onyx-peers.functions.functions/annotate-job-num
                             :jepsen/job-num job-num
                             :onyx/params [:jepsen/job-num]
@@ -33,9 +33,9 @@
                                :lifecycle/calls :onyx-peers.lifecycles.restart-lifecycle/restart-calls}
                               {:lifecycle/task :persist
                                :lifecycle/calls :onyx.plugin.bookkeeper/write-ledger-calls}]
-                 :workflow [[:identity-log :persist]]
+                 :workflow [[:annotate-job :persist]]
                  :task-scheduler :onyx.task-scheduler/balanced}
-                (add-read-ledgers :identity-log batch-size zk-addr ledgers-root-path password ledger-ids))] 
+                (add-read-ledgers :annotate-job batch-size zk-addr ledgers-root-path password ledger-ids))] 
     (spit "basic-job.edn" (with-out-str (fipp.edn/pprint job)))
     job))
 
@@ -46,7 +46,7 @@
                             :onyx/fn :onyx-peers.functions.functions/unwrap
                             :onyx/type :function
                             :onyx/batch-size batch-size}
-                           {:onyx/name :identity-log
+                           {:onyx/name :annotate-job
                             :onyx/fn :onyx-peers.functions.functions/annotate-job-num
                             ;:onyx/group-by-key :event-time 
                             :onyx/uniqueness-key :id
@@ -69,7 +69,7 @@
                             :onyx/batch-size batch-size
                             :onyx/doc "Writes messages to a BookKeeper ledger"}]
                  :windows [{:window/id :collect-segments
-                            :window/task :identity-log
+                            :window/task :annotate-job
                             :window/type :global
                             :window/aggregation :onyx.windowing.aggregation/conj
                             :window/window-key :event-time}]
@@ -86,9 +86,7 @@
                                :lifecycle/doc "Instruments a task's metrics to timbre"}
                               {:lifecycle/task :all
                                :lifecycle/calls :onyx-peers.lifecycles.restart-lifecycle/restart-calls}
-                              {:lifecycle/task :unwrap
-                               :lifecycle/calls :onyx-peers.lifecycles.restart-lifecycle/restart-calls}
-                              {:lifecycle/task :identity-log
+                              {:lifecycle/task :annotate-job
                                :lifecycle/calls :onyx.plugin.bookkeeper/new-ledger-calls
                                :bookkeeper/serializer-fn :onyx.compression.nippy/zookeeper-compress
                                :bookkeeper/password-bytes password
@@ -98,7 +96,7 @@
                                :bookkeeper/digest-type :mac}
                               {:lifecycle/task :persist
                                :lifecycle/calls :onyx.plugin.bookkeeper/write-ledger-calls}]
-                 :workflow [[:unwrap :identity-log] [:identity-log :persist]]
+                 :workflow [[:unwrap :annotate-job] [:annotate-job :persist]]
                  :task-scheduler :onyx.task-scheduler/balanced}
                 (add-read-ledgers :unwrap batch-size zk-addr ledgers-root-path password ledger-ids))] 
     (spit "aggregation-job.edn" (with-out-str (fipp.edn/pprint job)))

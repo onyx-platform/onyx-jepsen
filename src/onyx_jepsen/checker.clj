@@ -85,7 +85,7 @@
 (defn window-state-job-invariants [log-conn history final-replica n-jobs]
   (let [exception (job-exception log-conn final-replica)
         ledger-reads (first (history->read-ledgers history :persist))
-        trigger-ledger-reads (first (history->read-ledgers history :identity-log))
+        trigger-ledger-reads (first (history->read-ledgers history :annotate-job))
         final-window-state-write (->> (get (:value trigger-ledger-reads) 0) ;; only one job in this test
                                       (map (comp first :results)) ;; only one write per ledger
                                       (sort-by first) ;; Grab last written trigger call i.e. highest timestamp

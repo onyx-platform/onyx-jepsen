@@ -38,7 +38,5 @@
                 into 
                 (mapcat (fn [task]
                           [{:lifecycle/task task
-                            :lifecycle/calls :onyx-peers.lifecycles.restart-lifecycle/restart-calls}
-                           {:lifecycle/task task
                             :lifecycle/calls :onyx.plugin.bookkeeper/read-ledgers-calls}])
                         read-ledger-task-names)))))

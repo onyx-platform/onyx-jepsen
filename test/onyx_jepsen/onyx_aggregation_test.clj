@@ -61,7 +61,7 @@
       (onyx-gen/close-await-completion-gen)
       (onyx-gen/read-peer-log-gen)
       (onyx-gen/read-ledgers-gen :persist)
-      (onyx-gen/read-ledgers-gen :identity-log))))
+      (onyx-gen/read-ledgers-gen :annotate-job))))
 
 (deftest basic-test
   (is (-> (onyx-test/jepsen-test env-config peer-config test-setup test-name version (generator test-setup))

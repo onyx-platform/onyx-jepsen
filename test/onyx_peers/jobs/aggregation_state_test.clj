@@ -77,7 +77,7 @@
                       ;; i.e. a peer signal that it's finished everything related to the job
                       {:type :invoke :f :read-peer-log :timeout 2000}
                       {:type :invoke :f :read-ledgers :task :persist}
-                      {:type :invoke :f :read-ledgers :task :identity-log}])
+                      {:type :invoke :f :read-ledgers :task :annotate-job}])
         simple-gen (gen/seq events)
         {:keys [client checker model generator] :as basic-test} (onyx-test/jepsen-test env-config peer-config test-setup test version simple-gen)]
     (with-test-env [test-env [n-peers-total env-config peer-config]]
