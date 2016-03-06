@@ -30,9 +30,9 @@
         test-setup {:job-params {:batch-size 1}
                     :job-type :simple-job
                     :nemesis :na
-                    :time-limit 800 ; unused in this test
-                    :awake-ms 200 ; unused in this test
-                    :stopped-ms 100 ; unused in this test
+                    :time-limit 800 ; unused in non-jepsen test
+                    :awake-ms 200 ; unused in non-jepsen test
+                    :stopped-ms 100 ; unused in non-jepsen test
                     ; may or may not work when 5 is not divisible by n-jobs
                     :n-jobs 1
                     ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
