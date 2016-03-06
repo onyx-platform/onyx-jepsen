@@ -83,7 +83,7 @@ onyx:
 
 onyx-bookkeeper plugin:
 * [Handle case where peer is restored, but all messages fully acked #4] (https://github.com/onyx-platform/onyx-bookkeeper/issues/4) Unresolved, low priority.
-* [Plugin should wait until producer channel has completely finished #3] (https://github.com/onyx-platform/onyx-bookkeeper/issues/3) Unresolved.
+* [Plugin should wait until producer channel has completely finished #3] (https://github.com/onyx-platform/onyx-bookkeeper/issues/3) Resolved.
 * [Plugins using producer threads must be able to pass exceptions back to task #435](https://github.com/onyx-platform/onyx/issues/435) Resolved in onyx-bookkeeper, also fixed in onyx-datomic, onyx-seq, onyx-kafka.
 
 ## License
