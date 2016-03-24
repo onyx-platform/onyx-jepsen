@@ -2,6 +2,8 @@
 
 Jepsen testing Onyx. **Work in progress**
 
+We wrote a blog post describing our experience using Jepsen: [Onyx Straps in For a Jepsening ](http://www.onyxplatform.org/jekyll/update/2016/03/15/Onyx-Straps-In-For-A-Jepsening.html)
+
 ## Usage
 
 To run:
