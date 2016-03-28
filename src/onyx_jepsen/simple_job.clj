@@ -36,7 +36,7 @@
                  :workflow [[:annotate-job :persist]]
                  :task-scheduler :onyx.task-scheduler/balanced}
                 (add-read-ledgers :annotate-job batch-size zk-addr ledgers-root-path password ledger-ids))] 
-    (spit "basic-job.edn" (with-out-str (fipp.edn/pprint job)))
+    ;(spit "basic-job.edn" (with-out-str (fipp.edn/pprint job)))
     job))
 
 (defn build-window-state-job 
@@ -99,5 +99,5 @@
                  :workflow [[:unwrap :annotate-job] [:annotate-job :persist]]
                  :task-scheduler :onyx.task-scheduler/balanced}
                 (add-read-ledgers :unwrap batch-size zk-addr ledgers-root-path password ledger-ids))] 
-    (spit "aggregation-job.edn" (with-out-str (fipp.edn/pprint job)))
+    ;(spit "aggregation-job.edn" (with-out-str (fipp.edn/pprint job)))
     job))

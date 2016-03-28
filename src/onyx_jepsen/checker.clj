@@ -147,12 +147,6 @@
                   :all-added-triggered? all-added-triggered?
                   :all-added-read? all-added-read?}}))
 
-; (defn history->job-name [history]
-;   (:job-type (first (filter (fn [action]
-;                               (and (= (:f action) :submit-job)
-;                                    (= (:type action) :ok)))
-;                             history))))
-
 ;; TODO, check whether the jobs were even submitted, if not, nothing should be read back 
 ;; important for short running tests
 (defrecord Checker [test-setup peer-config n-peers n-jobs]

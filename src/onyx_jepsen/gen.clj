@@ -97,17 +97,3 @@
                (gen/sleep stopped-secs)
                {:type :info :f :stop}]) 
             (range))))
-
-; (defn kill-resurrect-nemesis-seq [awake-ms stopped-ms]
-;   (gen/seq 
-;     (mapcat (fn [_] 
-;               [{:type :info :f :kill}
-;                (gen/sleep stopped-ms)
-;                {:type :info :f :resurrect}
-;                (gen/sleep awake-ms)]) 
-;             (range))))
-
-; (defn final-resurrect-seq []
-;   (gen/seq
-;     [(gen/once {:type :info :f :kill})
-;      (gen/once {:type :info :f :resurrect})]))
