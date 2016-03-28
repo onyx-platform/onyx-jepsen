@@ -23,7 +23,7 @@
                             :onyx/params [:jepsen/job-num]
                             :onyx/type :function
                             :onyx/batch-size batch-size}]
-                 :lifecycles [{:lifecycle/task :all 
+                 :lifecycles [#_{:lifecycle/task :all 
                                :lifecycle/calls :onyx.lifecycle.metrics.metrics/calls
                                :metrics/buffer-capacity 10000
                                :metrics/workflow-name "simple-job"
@@ -74,11 +74,11 @@
                             :window/aggregation :onyx.windowing.aggregation/conj
                             :window/window-key :event-time}]
                  :triggers [{:trigger/window-id :collect-segments
-                             :trigger/refinement :onyx.triggers.refinements/accumulating
-                             :trigger/on :onyx.triggers.triggers/segment
+                             :trigger/refinement :onyx.refinements/accumulating
+                             :trigger/on :onyx.triggers/segment
                              :trigger/threshold [1 :elements]
                              :trigger/sync :onyx-peers.functions.functions/update-state-log}]
-                 :lifecycles [{:lifecycle/task :all 
+                 :lifecycles [#_{:lifecycle/task :all 
                                :lifecycle/calls :onyx.lifecycle.metrics.metrics/calls
                                :metrics/buffer-capacity 10000
                                :metrics/workflow-name "window-state-job"

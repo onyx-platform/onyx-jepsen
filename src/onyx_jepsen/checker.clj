@@ -58,6 +58,31 @@
                  (= (:type action) :ok)))
           history))
 
+(defn highest-timestamped-write 
+  "Grabs the trigger write with the highest timstamp value in it.
+   Currently unused as we now support job-completed trigger events, but we may use this later
+   if we want to track writes over the job's duration"
+  [trigger-ledger-reads]
+  (->> (get (:value trigger-ledger-reads) 0) ;; only one job in this test
+       (map (comp first :results)) ;; only one write per ledger
+       (sort-by first) ;; Grab last written trigger call i.e. highest timestamp
+       last
+       last))
+
+(defn single-trigger-write 
+  "Reads the results of a single trigger ledger write. 
+   Assumes only one trigger call has been made"
+  [trigger-ledger-reads]
+  (let [;; only one job in this test, should be lots of empty ledgers and only one write
+        job-triggers (filter (comp empty? :results) 
+                             (first (get (:value trigger-ledger-reads) 0)))]
+    ;; There should have only been a single write
+    (assert (= 1 (count job-triggers)) (str job-triggers))
+    (->> (first job-triggers)
+         :results
+         vec
+         last)))
+
 (defn simple-job-invariants [log-conn history final-replica n-jobs]
   (let [exception (job-exception log-conn final-replica)
         ledger-reads (first (history->read-ledgers history :persist))
@@ -86,11 +111,8 @@
   (let [exception (job-exception log-conn final-replica)
         ledger-reads (first (history->read-ledgers history :persist))
         trigger-ledger-reads (first (history->read-ledgers history :annotate-job))
-        final-window-state-write (->> (get (:value trigger-ledger-reads) 0) ;; only one job in this test
-                                      (map (comp first :results)) ;; only one write per ledger
-                                      (sort-by first) ;; Grab last written trigger call i.e. highest timestamp
-                                      last
-                                      last)
+        ;; TODO: Don't need the sort any more - trigger only called on job-complete
+        final-window-state-write (single-trigger-write trigger-ledger-reads) 
         window-state-filtered? (= (sort-by :id final-window-state-write) 
                                   (sort-by :id (set final-window-state-write)))
         ledger-read-results (ledger-reads->job+reads ledger-reads)

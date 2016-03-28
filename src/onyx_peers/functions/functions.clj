@@ -13,7 +13,7 @@
                         trigger
                         state-event
                         extent-state]
-  (when (= :task-lifecycle-stopped (:event-type state-event)) 
+  (when (= :job-completed (:event-type state-event)) 
     (let [value [(java.util.Date.) extent-state]
           compressed (nippy/zookeeper-compress value)
           n-bytes (count compressed)] 
