@@ -74,13 +74,12 @@
    Assumes only one trigger call has been made"
   [trigger-ledger-reads]
   (let [;; only one job in this test, should be lots of empty ledgers and only one write
-        job-triggers (filter (comp empty? :results) 
-                             (first (get (:value trigger-ledger-reads) 0)))]
-    ;; There should have only been a single write
+        job-triggers (remove (comp empty? :results) 
+                             (get (:value trigger-ledger-reads) 0))]
     (assert (= 1 (count job-triggers)) (str job-triggers))
     (->> (first job-triggers)
          :results
-         vec
+         last
          last)))
 
 (defn simple-job-invariants [log-conn history final-replica n-jobs]
