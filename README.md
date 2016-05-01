@@ -25,9 +25,9 @@ Tune disk size, memory size and cpu counts to taste.
 docker-machine create --driver vmwarefusion --vmwarefusion-disk-size 50000 --vmwarefusion-memory-size 20000 --vmwarefusion-cpu-count "6" jepsen-onyx
 ```
 
-#### VirtualBox instructions (untested, must support file sharing):
+#### VirtualBox instructions:
 ```
-docker-machine create --driver virtualbox --virtualbox-disk-size 50000 --virtualbox-memory 20000 jepsen-onyx
+docker-machine create --driver virtualbox --virtualbox-disk-size 50000 --virtualbox-memory 20000 --virtualbox-cpu-count 4  jepsen-onyx
 ```
 
 3. Set docker-machine env:
