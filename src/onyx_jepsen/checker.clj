@@ -74,8 +74,8 @@
    Assumes only one trigger call has been made"
   [trigger-ledger-reads]
   (let [;; only one job in this test, should be lots of empty ledgers and only one write
-        job-triggers (remove (comp empty? :results) 
-                             (get (:value trigger-ledger-reads) 0))]
+        job-triggers (vec (remove (comp empty? :results) 
+                                  (get (:value trigger-ledger-reads) 0)))]
     (assert (= 1 (count job-triggers)) (str job-triggers))
     (->> (first job-triggers)
          :results
@@ -161,21 +161,22 @@
           peer-client (component/start (system/onyx-client peer-config))
           log-conn (:log peer-client)
           all-peers-up? (= (count (:peers final-replica))
-                           (* 5 n-peers))
-          pulse-peers (pulses (:conn log-conn) peer-config)
+                           (* (:n-nodes test-setup) n-peers))
+          all-groups-up? (= (:n-nodes test-setup) (count (:groups final-replica)))
 
-          peers-match-pulses? (= (sort (map str (:peers final-replica)))
-                                 (sort pulse-peers))
-
+          pulse-groups (pulses (:conn log-conn) peer-config)
+          groups-matches-pulses? (= (sort (map str (:groups final-replica)))
+                                    (sort pulse-groups))
           accepting-empty? (empty? (:accepted final-replica))
           prepared-empty? (empty? (:prepared final-replica))
 
           invariants-cluster {:invariants {:all-peers-up? all-peers-up? 
+                                           :all-groups-up? all-groups-up?
                                            :read-whole-log-back? (< (count peer-log-reads) 50000)
-                                           :peers-match-pulses? peers-match-pulses? 
+                                           :groups-matches-pulses? groups-matches-pulses? 
                                            :accepting-empty? accepting-empty? 
                                            :prepared-empty? prepared-empty?}
-                              :information {:pulse-peers pulse-peers
+                              :information {:pulse-groups pulse-groups
                                             :peer-log peer-log-reads
                                             :final-replica final-replica}}
           ;; Job invariants
