@@ -10,9 +10,12 @@
             [taoensso.timbre :refer [info error debug fatal]]
             [onyx.compression.nippy :as nippy]
             [onyx.plugin.bookkeeper]
+            [schema.core :as s]
             [onyx.api]))
 
 (defn -main [n bind-addr & args]
+  ;; Turn on schema validations for jepsen
+  (s/set-fn-validation! true)
   (let [n-peers (Integer/parseInt n)
         env-config (-> "prod-env-config.edn" resource slurp read-string)
         env (onyx.api/start-env env-config)
