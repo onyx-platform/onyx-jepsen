@@ -56,10 +56,11 @@
                     :awake-mean 200 ; unused in this test
                     :stopped-mean 100 ; unused in this test
                     ; may or may not work when 5 is not divisible by n-jobs
+                    :n-nodes 1
                     :n-jobs 1
                     ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
-                    :n-peers 3}
-        fake-clients 5
+                    :n-peers 15}
+        fake-clients (:n-nodes test-setup)
         n-peers-total (* fake-clients (:n-peers test-setup))
         events (into (mapv (fn [v]
                              {:type :invoke :f :add :value v})

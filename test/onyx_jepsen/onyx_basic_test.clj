@@ -21,17 +21,17 @@
 (def test-setup 
   {:job-params {:batch-size 1}
    :job-type :simple-job
-   :nemesis :random-halves ; :bridge-shuffle or :random-halves
+   :nemesis (first (shuffle [:bridge-shuffle :random-halves])) ; :bridge-shuffle or :random-halves
    :awake-ms 200
    :stopped-ms 100
-   :time-limit 400
+   :time-limit 3000
+   :n-nodes 5
    ; may or may not work when 5 is not divisible by n-jobs
-   :n-jobs 5
+   :n-jobs (first (shuffle [1 5]))
    ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
    :n-peers 3})
 
-(defn generator [{:keys [job-type time-limit awake-ms stopped-ms n-jobs job-params] :as test-setup}]
-  (gen/phases
+(defn generator (gen/phases
     (->> (onyx-gen/filter-new identity 
                               (onyx-gen/frequency [(onyx-gen/adds (range)) 
                                                    (onyx-gen/submit-job-gen job-type n-jobs job-params)
@@ -54,9 +54,11 @@
 
     (onyx-gen/close-await-completion-gen)
     (onyx-gen/read-ledgers-gen :persist)
-    (onyx-gen/read-peer-log-gen)))
+    (onyx-gen/read-peer-log-gen))
+  [{:keys [job-type time-limit awake-ms stopped-ms n-jobs job-params] :as test-setup}])
 
 (deftest basic-test
+  (println "Running with test setup:" test-setup)
   (is (-> (onyx-test/jepsen-test env-config peer-config test-setup test-name version (generator test-setup))
           jc/run!
           :results
