@@ -5,16 +5,16 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.onyxplatform/onyx "0.9.7-alpha0"]
-                 ;[org.onyxplatform/onyx "0.9.6" ;:exclusions [org.slf4j/slf4j-nop] ]
+                 ;[org.onyxplatform/onyx "0.9.6" ;:exclusions [org.slf4j/slf4j-nop]]
                  [fipp "0.6.4"]
                  [org.onyxplatform/onyx-metrics "0.9.6.0"]
-                 [org.onyxplatform/onyx-bookkeeper "0.9.6.1-jepsentest"]
+                 [org.onyxplatform/onyx-bookkeeper "0.9.6.0"]
                  [jepsen "0.0.9"]]
   ;;; NOTE, don't swallow in BK
   :test-selectors {:jepsen :jepsen
                    :test-jepsen-tests :test-jepsen-tests
                    :all (constantly true)}
-  :jvm-opts ^:replace ["-server" "-Xmx6g"]
+  :jvm-opts ^:replace ["-server" "-Xmx3g"]
   :profiles {:uberjar {:aot [onyx-peers.launcher.aeron-media-driver
                              onyx-peers.launcher.launch-prod-peers]}
              :dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]]

@@ -80,4 +80,8 @@ EOF
 
 cd /onyx-jepsen
 
+script/run-test-start-in-docker.sh $ONYX_TEST
+
 fi
+
+exit
