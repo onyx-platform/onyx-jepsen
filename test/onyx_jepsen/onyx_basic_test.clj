@@ -31,7 +31,8 @@
    ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
    :n-peers 3})
 
-(defn generator (gen/phases
+(defn generator [{:keys [job-type time-limit awake-ms stopped-ms n-jobs job-params] :as test-setup}]
+  (gen/phases
     (->> (onyx-gen/filter-new identity 
                               (onyx-gen/frequency [(onyx-gen/adds (range)) 
                                                    (onyx-gen/submit-job-gen job-type n-jobs job-params)
@@ -54,8 +55,7 @@
 
     (onyx-gen/close-await-completion-gen)
     (onyx-gen/read-ledgers-gen :persist)
-    (onyx-gen/read-peer-log-gen))
-  [{:keys [job-type time-limit awake-ms stopped-ms n-jobs job-params] :as test-setup}])
+    (onyx-gen/read-peer-log-gen)))
 
 (deftest basic-test
   (println "Running with test setup:" test-setup)
