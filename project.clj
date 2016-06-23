@@ -14,7 +14,7 @@
   :test-selectors {:jepsen :jepsen
                    :test-jepsen-tests :test-jepsen-tests
                    :all (constantly true)}
-  :jvm-opts ^:replace ["-server" "-Xmx3g"]
+  :jvm-opts ^:replace ["-server" "-Xmx6g" "-XX:+UseG1GC"]
   :profiles {:uberjar {:aot [onyx-peers.launcher.aeron-media-driver
                              onyx-peers.launcher.launch-prod-peers]}
              :dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]]
