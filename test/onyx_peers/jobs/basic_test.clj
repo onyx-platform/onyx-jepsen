@@ -57,11 +57,12 @@
       (let [setup-client (client/setup! client "onyx-unit" "n1")]
         (try
           (let [history (reduce (fn [vs event]
+                                  (info "INVOKING" event)
                                   (conj vs event (client/invoke! setup-client test (gen/op generator test 0))))
                                 []
                                 events)
-                results (check/check checker test model history)]
-            (println results)
+                results (check/check checker test model history {})]
+            (println "FINAL" results)
             (is (:valid? results)))
           (finally
             (client/teardown! setup-client test)))))))

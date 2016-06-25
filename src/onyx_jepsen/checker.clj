@@ -11,7 +11,6 @@
             [clojure.core.async :as casync :refer [chan >!! <!! close! alts!!]]
             [clojure.tools.logging :refer :all]))
 
-
 (defn base-replica [peer-config]
   (merge replica/base-replica 
          {:job-scheduler (:onyx.peer/job-scheduler peer-config)
@@ -150,7 +149,7 @@
 ;; important for short running tests
 (defrecord Checker [test-setup peer-config n-peers n-jobs]
   checker/Checker
-  (check [checker test model history]
+  (check [checker test model history opts]
     (let [;;;;;;;;;
           ;; Cluster invariants
           peer-log-reads (:value (first (filter (fn [action]
@@ -163,7 +162,6 @@
           all-peers-up? (= (count (:peers final-replica))
                            (* (:n-nodes test-setup) n-peers))
           all-groups-up? (= (:n-nodes test-setup) (count (:groups final-replica)))
-
           pulse-groups (pulses (:conn log-conn) peer-config)
           groups-matches-pulses? (= (sort (map str (:groups final-replica)))
                                     (sort pulse-groups))

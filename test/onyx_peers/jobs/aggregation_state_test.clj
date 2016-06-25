@@ -88,7 +88,7 @@
                                   (conj vs event (client/invoke! setup-client test (gen/op simple-gen test 0))))
                                 []
                                 events)
-                results (check/check checker test model history)]
+                results (check/check checker test model history {})]
             (println results)
             (is (:valid? results)))
           (finally

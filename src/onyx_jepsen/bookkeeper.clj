@@ -216,7 +216,7 @@
 
 (defrecord Checker []
   checker/Checker
-  (check [checker test model history]
+  (check [checker test model history opts]
     (info "Checked " test model history)
     (let [ledger-reads (first (filter (fn [action]
                                         (and (= (:f action) :read-ledger)

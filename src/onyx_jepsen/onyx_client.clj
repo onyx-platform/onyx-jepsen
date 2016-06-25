@@ -45,8 +45,7 @@
   (onyx.plugin.bookkeeper/read-ledgers-data (:log onyx-client) 
                                             onyx-id 
                                             (:job-id job-data)
-                                            (get-in job-data [:task-ids task-name :id])))
-
+                                            task-name))
 
 (defn close-ledger-handles [ledger-handles]
   (mapv (fn [h] 
