@@ -21,6 +21,9 @@
           (base-replica peer-config)
           peer-log-reads))
 
+(comment (playback-log (clojure.edn/read-string (slurp "resources/prod-peer-config.edn"))
+                       (clojure.edn/read-string (slurp "/Users/lucas/clojure/onyx-jepsen/store/onyx-aggregation-test/20160626T165221.000Z/log.edn"))))
+
 (defn pulses [conn peer-config]
   (onyx.log.curator/children conn (onyx.log.zookeeper/pulse-path (:onyx/tenancy-id peer-config))))
 
@@ -111,8 +114,8 @@
         trigger-ledger-reads (first (history->read-ledgers history :annotate-job))
         ;; TODO: Don't need the sort any more - trigger only called on job-complete
         final-window-state-write (single-trigger-write trigger-ledger-reads) 
-        window-state-filtered? (= (sort-by :id final-window-state-write) 
-                                  (sort-by :id (set final-window-state-write)))
+        window-state-filtered? (= (count final-window-state-write) 
+                                  (count (set final-window-state-write)))
         ledger-read-results (ledger-reads->job+reads ledger-reads)
         ;; Add a check here that there are no overlaps in the ledgers read by the jobs
         correct-jobs? (reads-correct-jobs? ledger-read-results)
@@ -124,10 +127,8 @@
                          set)
         diff-added-read (clojure.set/difference added-values read-values)
         all-added-read? (empty? diff-added-read)
-        written-not-triggered (clojure.set/difference added-values 
-                                                      (->> final-window-state-write
-                                                           (map #(dissoc % :job-num))
-                                                           set))
+        written-not-triggered (clojure.set/difference (set (map :id added-values)) 
+                                                      (set final-window-state-write))
         all-added-triggered? (empty? written-not-triggered)
         unacked-writes-read (clojure.set/difference read-values added-values)]
     {:information {:read-values read-values

@@ -30,6 +30,7 @@
                          :bookkeeper/password-bytes password 
                          :bookkeeper/no-recovery? true
                          :onyx/max-peers 1
+                         ;:onyx/batch-timeout 1000
                          :onyx/batch-size batch-size
                          :onyx/doc "Reads a sequence from a BookKeeper ledger"})
                       read-ledger-task-names

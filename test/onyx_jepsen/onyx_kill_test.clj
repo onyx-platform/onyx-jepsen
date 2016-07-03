@@ -28,6 +28,7 @@
    :stagger-start-stop-secs 200
    :time-limit 2000
    :n-jobs 0
+   :n-nodes 5
    ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
    :n-peers 20})
 

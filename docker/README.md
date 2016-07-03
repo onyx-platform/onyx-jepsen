@@ -27,13 +27,13 @@ Alternatively, you can build the image yourself. This is a multi-step process, m
 1.  From this directory run 
 
     ````
-	docker build -t jepsen .
+	docker build -t lbradstreet/onyx-jepsen .
     ````
 
 2.  Start the container and run build-dockerized-jepsen.sh
 
     ````
-    docker run --privileged -t -i jepsen
+    docker run --privileged -t -i lbradstreet/onyx-jepsen
 
     > build-dockerized-jepsen.sh
     ````
@@ -41,11 +41,11 @@ Alternatively, you can build the image yourself. This is a multi-step process, m
 3.  From another window commit the updated image
 
     ````
-    docker commit {above container-id} jepsen
+    docker commit {above container-id} lbradstreet/onyx-jepsen
     ````
     
 4.  With the final image created, you can create a container to run Jepsen from
 
     ```
-    docker run --privileged -t -i jepsen
+    docker run --privileged -t -i lbradstreet/onyx-jepsen
     ```

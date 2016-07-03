@@ -23,12 +23,12 @@
   (-> "resources/prod-peer-config.edn" slurp read-string))
 
 (def test-setup 
-  {:job-params {:batch-size 20 #_(inc (rand-int 20))}
+  {:job-params {:batch-size (inc (rand-int 20))}
    :job-type :window-state-job
-   :nemesis :bridge-shuffle ; :bridge-shuffle or :random-halves
-   :awake-ms 200
-   :stopped-ms 200
-   :time-limit 1000
+   :nemesis :random-halves ;:bridge-shuffle ; :bridge-shuffle or :random-halves
+   :awake-ms 300
+   :stopped-ms 300
+   :time-limit 3000
    :n-nodes 5
    ; may or may not work when 5 is not divisible by n-jobs
    :n-jobs 1
