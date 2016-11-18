@@ -26,8 +26,8 @@
   {:job-params {:batch-size (inc (rand-int 20))}
    :job-type :window-state-job
    :nemesis :random-halves ;:bridge-shuffle ; :bridge-shuffle or :random-halves
-   :awake-ms 300
-   :stopped-ms 300
+   :awake-secs 300
+   :stopped-secs 300
    :time-limit 3000
    :n-nodes 5
    ; may or may not work when 5 is not divisible by n-jobs
@@ -35,7 +35,7 @@
    ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
    :n-peers 3})
 
-(defn generator [{:keys [job-type time-limit awake-ms stopped-ms n-jobs job-params] :as test-setup}]
+(defn generator [{:keys [job-type time-limit awake-secs stopped-secs n-jobs job-params] :as test-setup}]
   (let [input-data (map (fn [n]
                           {:id n :age (rand-int 100) :event-time (java.util.Date. n)}) 
                         (range))] 
@@ -49,7 +49,7 @@
                                                      ;0.01
                                                      0.01]))
            (gen/stagger 1/10)
-           (gen/nemesis (onyx-gen/start-stop-nemesis-seq awake-ms stopped-ms))
+           (gen/nemesis (onyx-gen/start-stop-nemesis-seq awake-secs stopped-secs))
            (gen/time-limit time-limit)) 
 
       ;; Bring everything back at the end

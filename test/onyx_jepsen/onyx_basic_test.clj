@@ -22,8 +22,8 @@
   {:job-params {:batch-size 10}
    :job-type :simple-job
    :nemesis (first (shuffle [:bridge-shuffle :random-halves])) ; :bridge-shuffle or :random-halves
-   :awake-ms 200
-   :stopped-ms 100
+   :awake-secs 200
+   :stopped-secs 100
    :time-limit 1000
    :n-nodes 5
    ; may or may not work when 5 is not divisible by n-jobs
@@ -31,7 +31,7 @@
    ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
    :n-peers 3})
 
-(defn generator [{:keys [job-type time-limit awake-ms stopped-ms n-jobs job-params] :as test-setup}]
+(defn generator [{:keys [job-type time-limit awake-secs stopped-secs n-jobs job-params] :as test-setup}]
   (gen/phases
     (->> (onyx-gen/filter-new identity 
                               (onyx-gen/frequency [(onyx-gen/adds (range)) 
@@ -43,7 +43,7 @@
                                                    0.01]))
          (gen/stagger 1/10)
          ;(gen/delay 1)
-         (gen/nemesis (onyx-gen/start-stop-nemesis-seq awake-ms stopped-ms))
+         (gen/nemesis (onyx-gen/start-stop-nemesis-seq awake-secs stopped-secs))
          (gen/time-limit time-limit)) 
 
     ;; Bring everything back at the end

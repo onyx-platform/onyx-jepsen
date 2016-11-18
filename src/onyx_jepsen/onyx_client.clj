@@ -171,18 +171,19 @@
                                       :type :ok
                                       :value (let [{:keys [job-num n-jobs params]} op
                                                    ledgers (assigned-ledgers @ledger-ids job-num n-jobs)
+                                                   ledgers-root-path "/ledgers"
                                                    built-job (case (:job-type op) 
                                                                :window-state-job 
                                                                (simple-job/build-window-state-job job-num 
                                                                                                   params
                                                                                                   zk-addr
-                                                                                                  (onyx.log.zookeeper/ledgers-path onyx-id)
+                                                                                                  ledgers-root-path
                                                                                                   ledgers)
                                                                :simple-job
                                                                (simple-job/build-job job-num 
                                                                                      params
                                                                                      zk-addr
-                                                                                     (onyx.log.zookeeper/ledgers-path onyx-id)
+                                                                                     ledgers-root-path
                                                                                      ledgers))
                                                    job-data (onyx.api/submit-job peer-config built-job)]
                                                (swap! jobs-data assoc job-num job-data)

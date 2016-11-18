@@ -4,11 +4,11 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.onyxplatform/onyx "0.9.7-beta1"]
+                 [org.onyxplatform/onyx "0.9.8-alpha1"]
                  ;[org.slf4j/slf4j-nop "1.7.21"]
                  [fipp "0.6.4"]
-                 [org.onyxplatform/onyx-metrics "0.9.7.0-beta1"]
-                 [org.onyxplatform/onyx-bookkeeper "0.9.7.0-beta1"]
+                 [org.onyxplatform/onyx-metrics "0.9.8.0-alpha1" :exclusions [org.onyxplatform/onyx]]
+                 [org.onyxplatform/onyx-bookkeeper "0.9.8.0-alpha1" :exclusions [org.onyxplatform/onyx]]
                  [jepsen "0.1.1"]]
   :test-selectors {:jepsen :jepsen
                    :test-jepsen-tests :test-jepsen-tests
