@@ -8,7 +8,7 @@
             [clojure.pprint :refer [pprint]]
 
             ;; Onyx!
-            [onyx.state.log.bookkeeper :as obk]
+            [onyx.bookkeeper.utils :as obk]
             [onyx.compression.nippy :as nippy]                                                                                                             
             [knossos.op :as op]
             [jepsen.control.util]

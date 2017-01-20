@@ -1,11 +1,13 @@
 (ns onyx-peers.jobs.basic-test
   (:require [clojure.core.async :refer [chan >!! <!! close! sliding-buffer]]
             [clojure.test :refer [deftest is]]
+            [onyx.bookkeeper.bookkeeper :as bkserver]
             [onyx.plugin.core-async :refer [take-segments!]]
             [jepsen 
              [client :as client]
              [checker :as check]
              [generator :as gen]]
+            [com.stuartsierra.component :as component]
             [onyx.test-helper :refer [load-config with-test-env]]
             [onyx-jepsen.simple-job :as simple-job]
             [onyx-jepsen.onyx-test :as onyx-test]
@@ -54,15 +56,25 @@
         {:keys [client checker model generator] :as basic-test} 
         (onyx-test/jepsen-test env-config peer-config test-setup test version (gen/seq events))]
     (with-test-env [test-env [n-peers-total env-config peer-config]]
-      (let [setup-client (client/setup! client "onyx-unit" "n1")]
-        (try
-          (let [history (reduce (fn [vs event]
-                                  (info "INVOKING" event)
-                                  (conj vs event (client/invoke! setup-client test (gen/op generator test 0))))
-                                []
-                                events)
-                results (check/check checker test model history {})]
-            (println "FINAL" results)
-            (is (:valid? results)))
-          (finally
-            (client/teardown! setup-client test)))))))
+      (let [log (:log (:env test-env))
+            bk-config (assoc env-config 
+                             :onyx.bookkeeper/server? true 
+                             :onyx.bookkeeper/delete-server-data? true
+                             :onyx.bookkeeper/local-quorum? true)
+            multi-bookie-server (component/start (bkserver/multi-bookie-server bk-config log))] 
+
+        (try 
+         (let [setup-client (client/setup! client "onyx-unit" "n1")]
+           (try
+            (let [history (reduce (fn [vs event]
+                                    (info "INVOKING" event)
+                                    (conj vs event (client/invoke! setup-client test (gen/op generator test 0))))
+                                  []
+                                  events)
+                  results (check/check checker test model history {})]
+              (println "FINAL" results)
+              (is (:valid? results)))
+            (finally
+             (client/teardown! setup-client test))))
+         (finally
+          (component/stop multi-bookie-server)))))))

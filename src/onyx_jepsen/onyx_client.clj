@@ -9,7 +9,7 @@
             [onyx.api]
             [onyx.plugin.bookkeeper]
             [onyx.compression.nippy :as nippy]
-            [onyx.state.log.bookkeeper :as obk])
+            [onyx.bookkeeper.utils :as obk])
   (:import (org.apache.bookkeeper.client LedgerEntry LedgerHandle)))
 
 (defn bookkeeper-client [env-config]

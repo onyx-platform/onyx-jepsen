@@ -49,7 +49,6 @@
                            {:onyx/name :annotate-job
                             :onyx/fn :onyx-peers.functions.functions/annotate-job-num
                             ;:onyx/group-by-key :event-time 
-                            :onyx/uniqueness-key :id
                             ;:onyx/flux-policy :continue
                             :onyx/n-peers 1
                             :jepsen/job-num job-num

@@ -17,10 +17,6 @@
                          :onyx/plugin :onyx.plugin.bookkeeper/read-ledgers
                          :onyx/type :input
                          :onyx/medium :bookkeeper
-                         ;; TODO: Vary pending timeout in different Jepsen tests
-                         :onyx/max-pending 5000
-                         :onyx/pending-timeout 10000
-                         ;; TODO: Vary read max chunk in different tests
                          ;:bookkeeper/read-max-chunk-size 10
                          :bookkeeper/zookeeper-addr zk-addr
                          :bookkeeper/zookeeper-ledgers-root-path ledgers-root-path

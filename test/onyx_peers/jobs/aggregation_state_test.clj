@@ -6,6 +6,8 @@
              [checker :as check]
              [generator :as gen]]
             [onyx.log.zookeeper :as zk]
+            [com.stuartsierra.component :as component]
+            [onyx.bookkeeper.bookkeeper :as bkserver]
             [onyx-jepsen.onyx-test :as onyx-test]
             [onyx-jepsen.simple-job :as simple-job]
             [onyx.test-helper :refer [load-config with-test-env]]
@@ -25,9 +27,6 @@
   [{:id 1  :age 21 :event-time #inst "2015-09-13T03:00:00.829-00:00"}
    {:id 2  :age 12 :event-time #inst "2015-09-13T03:04:00.829-00:00"}
    {:id 3  :age 3  :event-time #inst "2015-09-13T03:05:00.829-00:00"}
-   ;; duplicate values
-   {:id 3  :age 3  :event-time #inst "2015-09-13T03:05:00.829-00:00"}
-   {:id 3  :age 3  :event-time #inst "2015-09-13T03:05:00.829-00:00"}
    {:id 4  :age 64 :event-time #inst "2015-09-13T03:06:00.829-00:00"}
    {:id 5  :age 53 :event-time #inst "2015-09-13T03:07:00.829-00:00"}
    {:id 6  :age 52 :event-time #inst "2015-09-13T03:08:00.829-00:00"}
@@ -35,7 +34,6 @@
    {:id 8  :age 35 :event-time #inst "2015-09-13T03:15:00.829-00:00"}
    {:id 9  :age 49 :event-time #inst "2015-09-13T03:25:00.829-00:00"}
    {:id 10 :age 37 :event-time #inst "2015-09-13T03:45:00.829-00:00"}
-   {:id 3  :age 3  :event-time #inst "2015-09-13T03:05:00.829-00:00"}
    {:id 11 :age 15 :event-time #inst "2015-09-13T03:03:00.829-00:00"}
    {:id 12 :age 22 :event-time #inst "2015-09-13T03:56:00.829-00:00"}
    {:id 13 :age 83 :event-time #inst "2015-09-13T03:59:00.829-00:00"}
@@ -82,14 +80,23 @@
         simple-gen (gen/seq events)
         {:keys [client checker model generator] :as basic-test} (onyx-test/jepsen-test env-config peer-config test-setup test version simple-gen)]
     (with-test-env [test-env [n-peers-total env-config peer-config]]
-      (let [setup-client (client/setup! client "onyx-unit" "n1")]
-        (try
-          (let [history (reduce (fn [vs event]
-                                  (conj vs event (client/invoke! setup-client test (gen/op simple-gen test 0))))
-                                []
-                                events)
-                results (check/check checker test model history {})]
-            (println results)
-            (is (:valid? results)))
-          (finally
-            (client/teardown! setup-client test)))))))
+      (let [log (:log (:env test-env))
+            bk-config (assoc env-config 
+                             :onyx.bookkeeper/server? true 
+                             :onyx.bookkeeper/delete-server-data? true
+                             :onyx.bookkeeper/local-quorum? true)
+            multi-bookie-server (component/start (bkserver/multi-bookie-server bk-config log))]
+        (try 
+         (let [setup-client (client/setup! client "onyx-unit" "n1")]
+           (try
+            (let [history (reduce (fn [vs event]
+                                    (conj vs event (client/invoke! setup-client test (gen/op simple-gen test 0))))
+                                  []
+                                  events)
+                  results (check/check checker test model history {})]
+              (println results)
+              (is (:valid? results)))
+            (finally
+             (client/teardown! setup-client test))))
+         (finally
+          (component/stop multi-bookie-server)))))))
