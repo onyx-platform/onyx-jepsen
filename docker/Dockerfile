@@ -1,4 +1,4 @@
-FROM docker:1.10-dind
+FROM docker:1.13-dind
 MAINTAINER jake@apache.org
 
 ENV JEPSEN_GIT_URL http://github.com/aphyr/jepsen
