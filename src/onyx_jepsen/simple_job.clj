@@ -70,7 +70,7 @@
                  :windows [{:window/id :collect-segments
                             :window/task :annotate-job
                             :window/type :global
-                            :window/aggregation :onyx.windowing.aggregation/conj
+                            :window/aggregation [:onyx.windowing.aggregation/collect-key-value :id]
                             :window/window-key :event-time}]
                  :triggers [{:trigger/window-id :collect-segments
                              :trigger/refinement :onyx.refinements/accumulating

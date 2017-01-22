@@ -14,7 +14,7 @@
                         state-event
                         extent-state]
   (when (= :job-completed (:event-type state-event)) 
-    (let [value [(java.util.Date.) (map :id extent-state)]
+    (let [value [(java.util.Date.) extent-state]
           compressed (nippy/zookeeper-compress value)
           n-bytes (count compressed)] 
       (when (> n-bytes 1000000)
