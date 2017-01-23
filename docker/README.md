@@ -33,8 +33,9 @@ Alternatively, you can build the image yourself. This is a multi-step process, m
 2.  Start the container and run build-dockerized-jepsen.sh
 
     ````
-    docker run --privileged -t -i lbradstreet/onyx-jepsen
+    docker run --privileged -t -i lbradstreet/onyx-jepsen /bin/sh
 
+    > docker daemon --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375 --storage-driver=vfs &
     > build-dockerized-jepsen.sh
     ````
 
