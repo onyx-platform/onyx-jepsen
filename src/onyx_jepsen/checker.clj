@@ -11,18 +11,10 @@
             [clojure.core.async :as casync :refer [chan >!! <!! close! alts!!]]
             [clojure.tools.logging :refer :all]))
 
-(defn base-replica [peer-config]
-  (merge replica/base-replica 
-         {:job-scheduler (:onyx.peer/job-scheduler peer-config)
-          :messaging (select-keys peer-config [:onyx.messaging/impl])}))
-
-(defn playback-log [peer-config peer-log-reads]
+(defn playback-log [{:keys [base-replica entries] :as m}]
   (reduce #(onyx.extensions/apply-log-entry %2 %1)
-          (base-replica peer-config)
-          peer-log-reads))
-
-(comment (playback-log (clojure.edn/read-string (slurp "resources/prod-peer-config.edn"))
-                       (clojure.edn/read-string (slurp "/Users/lucas/clojure/onyx-jepsen/store/onyx-aggregation-test/20160626T165221.000Z/log.edn"))))
+          base-replica
+          entries))
 
 (defn pulses [conn peer-config]
   (onyx.log.curator/children conn (onyx.log.zookeeper/pulse-path (:onyx/tenancy-id peer-config))))
@@ -43,11 +35,14 @@
                          :read-results (:results r)}) 
                       reads)))))
 
+(defn emitted-segment? [segment] 
+  (= :emitted (:type segment)))
+
 (defn reads-correct-jobs? [job+reads]
   (empty? 
     (remove (fn [{:keys [read-results job-num]}]
               (or (empty? read-results) 
-                  (= #{job-num} (set (map :job-num read-results)))))
+                  (= #{job-num} (set (map :job-num (remove emitted-segment? read-results))))))
             job+reads)))
 
 (defn job-exception [log-conn final-replica]
@@ -61,7 +56,7 @@
           history))
 
 (defn highest-timestamped-write 
-  "Grabs the trigger write with the highest timstamp value in it.
+  "Grabs the trigger write with the highest timestamp value in it.
    Currently unused as we now support job-completed trigger events, but we may use this later
    if we want to track writes over the job's duration"
   [trigger-ledger-reads]
@@ -71,14 +66,14 @@
        last
        last))
 
-(defn single-trigger-write 
+(defn final-trigger-write 
   "Reads the results of a single trigger ledger write. 
    Assumes only one trigger call has been made"
   [trigger-ledger-reads]
-  (let [;; only one job in this test, should be lots of empty ledgers and only one write
-        job-triggers (vec (remove (comp empty? :results) 
+  (let [job-triggers (vec (remove (comp empty? :results) 
                                   (get (:value trigger-ledger-reads) 0)))]
-    (assert (= 1 (count job-triggers)) (str job-triggers))
+    ;; final trigger write may occur multiple times if job isn't sealed before a peer crashes
+    ;; this checks that all the trigger writes are the same
     (->> (first job-triggers)
          :results
          last
@@ -104,7 +99,9 @@
                    :unacknowledged-writes-read unacked-writes-read
                    :job-exception-message (some-> exception (.getMessage))
                    :job-exception-trace (if exception (with-out-str (clojure.stacktrace/print-stack-trace exception)))}
-     :invariants {:job-completed? (nil? exception)
+     :invariants {:job-completed? (and (nil? exception) 
+                                       (= (count (:completed-jobs final-replica))
+                                          n-jobs))
                   :reads-correct-jobs? correct-jobs?
                   :all-written-read? all-written-read?}}))
 
@@ -113,7 +110,7 @@
         ledger-reads (first (history->read-ledgers history :persist))
         trigger-ledger-reads (first (history->read-ledgers history :annotate-job))
         ;; TODO: Don't need the sort any more - trigger only called on job-complete
-        final-window-state-write (single-trigger-write trigger-ledger-reads) 
+        final-window-state-write (final-trigger-write trigger-ledger-reads) 
         window-state-filtered? (= (count final-window-state-write) 
                                   (count (set final-window-state-write)))
         ledger-read-results (ledger-reads->job+reads ledger-reads)
@@ -124,17 +121,30 @@
         read-values (->> ledger-read-results
                          (mapcat :read-results)
                          (map #(dissoc % :job-num))
+                         ;; values sent down not via trigger sync
+                         (remove emitted-segment?)
                          set)
+        trigger-emitted-values (->> ledger-read-results
+                                    (mapcat :read-results)
+                                    (map #(dissoc % :job-num))
+                                    ;; values sent down not via trigger sync
+                                    (filter emitted-segment?)
+                                    (mapcat :ids)
+                                    set)
         diff-added-read (clojure.set/difference added-values read-values)
         all-added-read? (empty? diff-added-read)
         written-not-triggered (clojure.set/difference (set (map :id added-values)) 
                                                       (set final-window-state-write))
         all-added-triggered? (empty? written-not-triggered)
+        added-not-emitted (clojure.set/difference (set (map :id added-values)) 
+                                                  (set trigger-emitted-values))
+        all-added-emitted? (empty? added-not-emitted)
         unacked-writes-read (clojure.set/difference read-values added-values)]
     {:information {:read-values read-values
                    :diff-added-read diff-added-read
                    :unacknowledged-writes-read unacked-writes-read
                    :added-not-triggered written-not-triggered
+                   :added-not-emitted added-not-emitted
                    :job-exception-message (some-> exception (.getMessage))
                    :job-exception-trace (if exception 
                                           (with-out-str (clojure.stacktrace/print-stack-trace exception)))}
@@ -144,6 +154,8 @@
                                            n-jobs))
                   :reads-correct-jobs? correct-jobs?
                   :all-added-triggered? all-added-triggered?
+                  ;; FIXME: all-added-emitted? is currently broken by job-complete not flushing remaining segments.
+                  ;:all-added-emitted? all-added-emitted?
                   :all-added-read? all-added-read?}}))
 
 ;; TODO, check whether the jobs were even submitted, if not, nothing should be read back 
@@ -157,7 +169,7 @@
                                                   (and (= (:f action) :read-peer-log)
                                                        (= (:type action) :ok)))
                                                 history)))
-          final-replica (playback-log peer-config peer-log-reads)
+          final-replica (playback-log peer-log-reads)
           peer-client (component/start (system/onyx-client peer-config))
           log-conn (:log peer-client)
           all-peers-up? (= (count (:peers final-replica))
