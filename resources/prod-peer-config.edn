@@ -1,12 +1,19 @@
 {:zookeeper/address "n1:2181,n2:2181,n3:2181,n4:2181,n5:2181"
  :onyx.peer/job-scheduler :onyx.job-scheduler/greedy
  :onyx.messaging/impl :aeron
- ;:onyx.zookeeper/backoff-base-sleep-time-ms 1000
- ;:onyx.zookeeper/backoff-max-sleep-time-ms 30000
- ;:onyx.zookeeper/backoff-max-retries 4
+ :onyx.zookeeper/backoff-base-sleep-time-ms 1000
+ :onyx.zookeeper/backoff-max-sleep-time-ms 30000
+ :onyx.zookeeper/backoff-max-retries 4
+ :onyx.peer/idle-sleep-ns 2000000
+ :onyx.peer/storage :s3
+ :onyx.peer/storage.s3.bucket "onyx-s3-testing"
+ :onyx.peer/storage.s3.region "us-west-2"
  :onyx/tenancy-id "JEPSENONYXID"
  ;; Change "localhost" to a resolvable hostname
  ;; by any node in your cluster.
  :onyx.messaging/bind-addr "localhost"
+ :onyx.query/server? true
+ :onyx.query.server/ip "127.0.0.1"
+ :onyx.query.server/port 8091
  :onyx.messaging/peer-port 40200
  :onyx.messaging.aeron/embedded-driver? true}

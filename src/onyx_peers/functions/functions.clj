@@ -19,6 +19,14 @@
           n-bytes (count compressed)] 
       (when (> n-bytes 1000000)
         (throw (Exception. "Payload too big for BookKeeper")))
-      (info "task complete:" (.getId ledger-handle) n-bytes "bytes" [(java.util.Date.) (map :id extent-state)])
+      (info "task complete:" (.getId ledger-handle) n-bytes "bytes" [(java.util.Date.) extent-state])
       (.addEntry ledger-handle compressed)
       (info "task complete successfully wrote" n-bytes "bytes"))))
+
+(defn emit-contents [event 
+                     window
+                     trigger
+                     state-event
+                     extent-state]
+  {:type :emitted
+   :ids extent-state})

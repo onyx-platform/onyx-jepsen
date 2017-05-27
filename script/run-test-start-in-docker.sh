@@ -17,6 +17,7 @@ hostname d1 && \
 	lein test :only $TEST |& tee test-output.log || true
 
 cp test-output.log store/latest/
+mv metrics.txt store/latest/
 
 for i in n1 n2 n3 n4 n5; 
 do 

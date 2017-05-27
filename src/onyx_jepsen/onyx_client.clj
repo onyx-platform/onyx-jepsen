@@ -69,14 +69,14 @@
 
 (defn read-peer-log [log timeout-ms]
   (let [ch (chan 1000)] 
-    (onyx.extensions/subscribe-to-log log ch)
-    (loop [entries []]
-      (if (= 50000 (count entries)) 
-        entries
-        (if-let [entry (first (alts!! [ch (casync/timeout timeout-ms)]))]
-          (do (info "LOG ENTRY:" entry)
-              (recur (conj entries entry)))
-          entries)))))
+    {:base-replica (onyx.extensions/subscribe-to-log log ch)
+     :entries (loop [entries []]
+                (if (>= (count entries) max-entries) 
+                  entries
+                  (if-let [entry (first (alts!! [ch (casync/timeout timeout-ms)]))]
+                    (do (info "LOG ENTRY:" entry)
+                        (recur (conj entries entry)))
+                    entries)))}))
 
 (defn read-task-ledgers [onyx-client env-config jobs onyx-id task-name]
   (into {} 
@@ -124,6 +124,7 @@
   (invoke! [this test op]
     (let [zk-addr (:zookeeper/address env-config)
           onyx-id (:onyx/tenancy-id env-config)] 
+      (println "INVOKING OP" op)
       (case (:f op)
         :read-peer-log (timeout 1000000
                                 (assoc op :type :info :value :timed-out)
@@ -134,7 +135,7 @@
                                   (catch Throwable t
                                     (assoc op :type :info :value t))))
 
-        :close-ledgers-await-completion (timeout 1000000
+        :close-ledgers-await-completion (timeout 2000000
                                                  (assoc op :type :info :value :timed-out)
                                                  (try
                                                    (assoc op 
@@ -155,7 +156,7 @@
                                  (catch Throwable t
                                    (assoc op :type :info :value t))))
 
-        :gc-peer-log (timeout 10000
+        :gc-peer-log (timeout 40000
                               (assoc op :type :info :value :timed-out)
                               (try
                                 (assoc op

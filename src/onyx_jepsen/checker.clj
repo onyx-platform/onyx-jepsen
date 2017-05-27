@@ -154,8 +154,7 @@
                                            n-jobs))
                   :reads-correct-jobs? correct-jobs?
                   :all-added-triggered? all-added-triggered?
-                  ;; FIXME: all-added-emitted? is currently broken by job-complete not flushing remaining segments.
-                  ;:all-added-emitted? all-added-emitted?
+                  :all-added-emitted? all-added-emitted?
                   :all-added-read? all-added-read?}}))
 
 ;; TODO, check whether the jobs were even submitted, if not, nothing should be read back 

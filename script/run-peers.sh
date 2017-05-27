@@ -6,14 +6,19 @@ mount -t tmpfs -o remount,rw,nosuid,nodev,noexec,relatime,size=2048M tmpfs /dev/
 
 BIND_ADDR=$(ifconfig eth0 | grep "inet addr:" | cut -d : -f 2 | cut -d " " -f 1)
 N_PEERS=$1
+export AWS_ACCESS_KEY="AKIAI45RKKIOL5LBCDUA"
+export AWS_SECRET_KEY="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"
 
 ## TODO REMOVE LIVENESS
-nohup java -D"aeron.client.liveness.timeout=50000000000"  \
+nohup java \
 	   -D"aeron.term.buffer.length=4194304" \
-	    -D"aeron.threading.mode=SHARED" -server -XX:+UseG1GC \
+	   -D"aeron.threading.mode=SHARED" -server -XX:+UseG1GC \
                         -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:+UnlockDiagnosticVMOptions \
 			-XX:StartFlightRecording="duration=1080s,filename=myrecording.jfr" \
 	-cp onyx-peers.jar onyx_peers.launcher.launch_prod_peers $N_PEERS $BIND_ADDR > peers-out.log 2>&1 < /dev/null &
+
+
+           #-D"aeron.client.liveness.timeout=50000000000"  \
 
 if [ $? -eq 0 ]
 then

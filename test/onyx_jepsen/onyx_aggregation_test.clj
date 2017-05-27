@@ -26,9 +26,10 @@
   {:job-params {:batch-size (inc (rand-int 20))}
    :job-type :window-state-job
    :nemesis :random-halves ;:bridge-shuffle ; :bridge-shuffle or :random-halves
-   :awake-secs 300
-   :stopped-secs 300
-   :time-limit 3000
+   ;; increase awake and stop time to give gcs more time to settle
+   :awake-secs 600
+   :stopped-secs 600
+   :time-limit 2000
    :n-nodes 5
    ; may or may not work when 5 is not divisible by n-jobs
    :n-jobs 1
@@ -37,18 +38,19 @@
 
 (defn generator [{:keys [job-type time-limit awake-secs stopped-secs n-jobs job-params] :as test-setup}]
   (let [input-data (map (fn [n]
-                          {:id n :age (rand-int 100) :event-time (java.util.Date. n)}) 
+                          {:id n :age (rand-int 100) :curr (System/currentTimeMillis) :event-time (java.util.Date. n)}) 
                         (range))] 
     (gen/phases
       (->> (onyx-gen/filter-new identity 
                                 (onyx-gen/frequency [(onyx-gen/adds input-data)
                                                      (onyx-gen/submit-job-gen job-type n-jobs job-params)
-                                                     ;(gen/once (gc-peer-logs))
+                                                     (onyx-gen/gc-peer-logs)
                                                      ]
                                                     [0.99
-                                                     ;0.01
-                                                     0.01]))
-           (gen/stagger 1/10)
+                                                     0.01
+                                                     0.000]))
+           ;(gen/stagger 1/15)
+           (gen/stagger 1/5)
            (gen/nemesis (onyx-gen/start-stop-nemesis-seq awake-secs stopped-secs))
            (gen/time-limit time-limit)) 
 
@@ -57,14 +59,14 @@
       (gen/nemesis (gen/once {:type :info :f :stop}))
       ;; Sleep for a while to give peers a chance to come back up
       ;; Should be enough time that curator backoff * max-retries is covered
-      (gen/sleep 120)
+      (gen/sleep 300)
 
       (onyx-gen/close-await-completion-gen)
       (onyx-gen/read-peer-log-gen)
       (onyx-gen/read-ledgers-gen :persist)
       (onyx-gen/read-ledgers-gen :annotate-job))))
 
-(deftest basic-test
+(deftest aggregation-test
   (println "Running with test setup:" test-setup)
   (is (-> (onyx-test/jepsen-test env-config peer-config test-setup test-name version (generator test-setup))
           jc/run!

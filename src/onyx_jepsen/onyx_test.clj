@@ -5,6 +5,7 @@
             [clojure.string :as str]
             [clojure.pprint :refer [pprint]]
 
+            [onyx-jepsen.metrics]
             [onyx-jepsen.simple-job :as simple-job]
             [onyx-jepsen.gen :as onyx-gen]
             [onyx-jepsen.checker :as onyx-checker]
@@ -21,7 +22,7 @@
              [checker :as checker]
              [nemesis :as nemesis]
              [generator :as gen]
-             [util :refer [timeout meh]]]
+             [util :as util :refer [timeout meh]]]
             [jepsen.control.util :as cu]
             [jepsen.control.net :as net]
             [jepsen.os :as os]
@@ -138,11 +139,13 @@
 (defn jepsen-test
   "A simple test of Onyx's safety. Supply your own generator for your test"
   [env-config peer-config test-setup name version generator]
+  (future (onyx-jepsen.metrics/pull-metrics))
   (let [{:keys [n-jobs job-params n-peers time-limit awake-mean stopped-mean client]} test-setup]
     (merge tests/noop-test
            {:os os
             :db (setup test-setup version)
             :name name
+            :start-time (util/local-time)
 	    :client (case client
 		      :no-bookkeeper (onyx-client/new-peer-read-client env-config peer-config)
 		      (onyx-client/write-log-client env-config peer-config (atom {}) (atom []) (atom [])))

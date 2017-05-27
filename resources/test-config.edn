@@ -20,6 +20,9 @@
   ; :onyx.peer/storage.s3.accelerate? false
   ;; Increase timeouts for circle ci
   ; :onyx.peer/coordinator-barrier-period-ms 40000
+  :onyx.query/server? true
+  :onyx.query.server/ip "127.0.0.1"
+  :onyx.query.server/port 8091
   :onyx.peer/coordinator-barrier-period-ms 1000
   :onyx.peer/subscriber-liveness-timeout-ms 10000
   :onyx.peer/publisher-liveness-timeout-ms 10000

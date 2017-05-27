@@ -12,6 +12,7 @@
             [onyx-jepsen.simple-job :as simple-job]
             [onyx.test-helper :refer [load-config with-test-env]]
             [taoensso.timbre :refer [fatal info]]
+            [jepsen.store :refer [start-logging!]]
             [onyx.api]
 
             ;; Peer requires
@@ -20,8 +21,7 @@
             [onyx.plugin.core-async :refer [take-segments!]]
             [onyx.plugin.bookkeeper]
             [onyx-peers.lifecycles.restart-lifecycle]
-            [onyx.lifecycle.metrics.timbre]
-            [onyx.lifecycle.metrics.metrics]))
+            [onyx.lifecycle.metrics.timbre]))
 
 (def input
   [{:id 1  :age 21 :event-time #inst "2015-09-13T03:00:00.829-00:00"}
@@ -86,6 +86,7 @@
                              :onyx.bookkeeper/delete-server-data? true
                              :onyx.bookkeeper/local-quorum? true)
             multi-bookie-server (component/start (bkserver/multi-bookie-server bk-config log))]
+        (start-logging! basic-test)
         (try 
          (let [setup-client (client/setup! client "onyx-unit" "n1")]
            (try
