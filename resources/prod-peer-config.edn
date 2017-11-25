@@ -8,6 +8,12 @@
  :onyx.peer/storage :s3
  :onyx.peer/storage.s3.bucket "onyx-s3-testing"
  :onyx.peer/storage.s3.region "us-west-2"
+ :onyx.bookkeeper/ledger-ensemble-size 3
+ :onyx.bookkeeper/ledger-quorum-size 3
+ :onyx.bookkeeper/ledger-password "INSECUREDEFAULTPASSWORD"
+ :onyx.bookkeeper/zk-ledgers-root-path "/ledgers"
+ :onyx.bookkeeper/client-timeout 60000
+ :onyx.bookkeeper/client-throttle 30000
  :onyx/tenancy-id "JEPSENONYXID"
  ;; Change "localhost" to a resolvable hostname
  ;; by any node in your cluster.

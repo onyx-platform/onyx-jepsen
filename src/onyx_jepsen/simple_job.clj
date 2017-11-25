@@ -87,14 +87,13 @@
 
                  :triggers [{:trigger/window-id :collect-send-downstream
                              :trigger/id :send-down
-                             :trigger/refinement :onyx.refinements/discarding
+                             :trigger/post-evictor [:all]
                              :trigger/on :onyx.triggers/segment
                              :trigger/threshold [1 :elements]
                              :trigger/emit :onyx-peers.functions.functions/emit-contents}
                             
                             {:trigger/window-id :collect-segments
                              :trigger/id :accumulate-sync
-                             :trigger/refinement :onyx.refinements/accumulating
                              :trigger/on :onyx.triggers/segment
                              :trigger/threshold [1 :elements]
                              :trigger/sync :onyx-peers.functions.functions/update-state-log}]

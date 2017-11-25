@@ -19,7 +19,10 @@
           n-bytes (count compressed)] 
       (when (> n-bytes 1000000)
         (throw (Exception. "Payload too big for BookKeeper")))
-      (info "task complete:" (.getId ledger-handle) n-bytes "bytes" [(java.util.Date.) extent-state])
+      (info window trigger
+            (select-keys event [:onyx.core/slot-id :onyx.core/job-id :onyx.core/task]) 
+            (select-keys state-event [:group-key :lower-bound :upper-bound])
+            "task complete:" (.getId ledger-handle) n-bytes "bytes" [(java.util.Date.) extent-state])
       (.addEntry ledger-handle compressed)
       (info "task complete successfully wrote" n-bytes "bytes"))))
 

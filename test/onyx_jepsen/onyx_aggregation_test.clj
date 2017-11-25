@@ -29,7 +29,7 @@
    ;; increase awake and stop time to give gcs more time to settle
    :awake-secs 600
    :stopped-secs 600
-   :time-limit 2000
+   :time-limit 1800
    :n-nodes 5
    ; may or may not work when 5 is not divisible by n-jobs
    :n-jobs 1

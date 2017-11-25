@@ -65,6 +65,7 @@
                       bk-config (assoc env-config 
                                        :onyx.bookkeeper/server? true 
                                        :onyx.bookkeeper/delete-server-data? true
+                                       :onyx.bookkeeper/local-quorum-ports [3888 3889 3890]
                                        :onyx.bookkeeper/local-quorum? true)
                       multi-bookie-server (component/start (bkserver/multi-bookie-server bk-config log))] 
                   (try 

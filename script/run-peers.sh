@@ -6,8 +6,8 @@ mount -t tmpfs -o remount,rw,nosuid,nodev,noexec,relatime,size=2048M tmpfs /dev/
 
 BIND_ADDR=$(ifconfig eth0 | grep "inet addr:" | cut -d : -f 2 | cut -d " " -f 1)
 N_PEERS=$1
-export AWS_ACCESS_KEY="AKIAI45RKKIOL5LBCDUA"
-export AWS_SECRET_KEY="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"
+export AWS_ACCESS_KEY="AKIAJAFOXTB4DCYNUE7A"
+export AWS_SECRET_KEY="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"
 
 ## TODO REMOVE LIVENESS
 nohup java \

@@ -3,12 +3,23 @@
   :zookeeper/server? true
   :zookeeper.server/port 2188
   :onyx.bookkeeper/server? true
+  :onyx.bookkeeper/ledger-ensemble-size 2
+  :onyx.bookkeeper/zk-ledgers-root-path "/ledgers"
+  :onyx.bookkeeper/client-timeout 60000
+  :onyx.bookkeeper/client-throttle 30000
   :onyx.bookkeeper/delete-server-data? true
+  :onyx.bookkeeper/ledger-password "INSECUREDEFAULTPASSWORD"
+  :onyx.bookkeeper/ledger-id-written-back-off 50
   :onyx.bookkeeper/local-quorum? true
+  :onyx.bookkeeper/ledger-quorum-size 3
   :onyx.bookkeeper/local-quorum-ports [3196 3197 3198]}
 
  :peer-config
  {:zookeeper/address "127.0.0.1:2188"
+  :onyx.bookkeeper/zk-ledgers-root-path "/ledgers"
+  :onyx.bookkeeper/client-timeout 60000
+  :onyx.bookkeeper/client-throttle 30000
+  :onyx.bookkeeper/ledger-password "INSECUREDEFAULTPASSWORD"
   :onyx.peer/job-scheduler :onyx.job-scheduler/greedy
   :onyx.peer/storage :s3
   :onyx.peer/storage.s3.bucket "onyx-s3-testing"
