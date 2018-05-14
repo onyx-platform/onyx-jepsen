@@ -76,8 +76,11 @@
         (info node "ZK restarting")
         (c/exec :service :zookeeper :restart)
 
-        (info node "Running peers")
-        (c/exec "/run-peers.sh" (:n-peers test-setup))
+        (info node "Running peers with secrets.")
+        (c/exec "/run-peers.sh" 
+                (:n-peers test-setup)
+                (:aws-access-key (:secrets test-setup))
+                (:aws-secret-key (:secrets test-setup)))
         ;; Sleep here shouldn't really be necessary, but clients are connecting
         ;; to ledgers before run-peer's BookKeeper is up
         (c/exec :sleep :60)

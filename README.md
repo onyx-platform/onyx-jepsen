@@ -62,7 +62,7 @@ for more details.
 
 Uses peers with the following configuration to avoid resource starvation running on a single machine:
 
--D"aeron.client.liveness.timeout=50000000000" -D"aeron.threading.mode=SHARED" -server -XX:+UseG1GC 
+-D"aeron.threading.mode=SHARED" -server -XX:+UseG1GC 
 
 See script/run-peers.sh for settings.
 

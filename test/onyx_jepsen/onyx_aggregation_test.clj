@@ -22,19 +22,27 @@
 (def peer-config
   (-> "resources/prod-peer-config.edn" slurp read-string))
 
+(def aws-access-key (or (System/getenv "AWS_ACCESS_KEY_ID")
+                        (throw (Exception. "AWS_ACCESS_KEY_ID must be set."))))
+
+(def aws-secret-key (or (System/getenv "AWS_SECRET_ACCESS_KEY")
+                        (throw (Exception. "AWS_SECRET_ACCESS_KEY must be set."))))
+
 (def test-setup 
   {:job-params {:batch-size (inc (rand-int 20))}
    :job-type :window-state-job
    :nemesis :random-halves ;:bridge-shuffle ; :bridge-shuffle or :random-halves
-   ;; increase awake and stop time to give gcs more time to settle
-   :awake-secs 600
-   :stopped-secs 600
-   :time-limit 1800
-   :n-nodes 5
-   ; may or may not work when 5 is not divisible by n-jobs
-   :n-jobs 1
-   ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
-   :n-peers 3})
+   :secrets {:aws-access-key aws-access-key
+             :aws-secret-key aws-secret-key}
+    ;; increase awake and stop time to give gcs more time to settle
+    :awake-secs 600
+    :stopped-secs 600
+    :time-limit 1800
+    :n-nodes 5
+    ; may or may not work when 5 is not divisible by n-jobs
+    :n-jobs 1
+    ; Minimum total = 5 (input ledgers) + 1 intermediate + 1 output
+    :n-peers 3})
 
 (defn generator [{:keys [job-type time-limit awake-secs stopped-secs n-jobs job-params] :as test-setup}]
   (let [input-data (map (fn [n]
@@ -44,8 +52,7 @@
       (->> (onyx-gen/filter-new identity 
                                 (onyx-gen/frequency [(onyx-gen/adds input-data)
                                                      (onyx-gen/submit-job-gen job-type n-jobs job-params)
-                                                     (onyx-gen/gc-peer-logs)
-                                                     ]
+                                                     (onyx-gen/gc-peer-logs)]
                                                     [0.99
                                                      0.01
                                                      0.000]))
