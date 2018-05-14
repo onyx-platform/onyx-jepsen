@@ -6,10 +6,10 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  ;[org.slf4j/slf4j-nop "1.7.21"]
                  [fipp "0.6.4"]
-                 [org.onyxplatform/onyx "0.12.0-SNAPSHOT"]
-                 [org.onyxplatform/onyx-peer-http-query "0.12.0.0-rc1"]
-                 [org.onyxplatform/onyx-metrics "0.12.0.0-rc1" :exclusions [org.onyxplatform/onyx]]
-                 [org.onyxplatform/onyx-bookkeeper "0.12.0.0-rc1" :exclusions [org.onyxplatform/onyx]]
+                 [org.onyxplatform/onyx "0.13.0-20180514.064012-3"]
+                 [org.onyxplatform/onyx-peer-http-query "0.13.0.0-alpha1"]
+                 [org.onyxplatform/onyx-metrics "0.13.0.0-alpha1" :exclusions [org.onyxplatform/onyx]]
+                 [org.onyxplatform/onyx-bookkeeper "0.13.0.0-alpha1" :exclusions [org.onyxplatform/onyx]]
                  [jepsen "0.1.4" :exclusions [ring]]]
   :test-selectors {:jepsen :jepsen
                    :test-jepsen-tests :test-jepsen-tests

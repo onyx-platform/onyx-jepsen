@@ -4,6 +4,12 @@
  :onyx.bookkeeper/port 3196
  :onyx.bookkeeper/ledger-ensemble-size 3
  :onyx.bookkeeper/ledger-quorum-size 3
+ :onyx.bookkeeper/zk-ledgers-root-path "/ledgers"
+ :onyx.bookkeeper/client-timeout 60000
+ :onyx.bookkeeper/client-throttle 30000
+ :onyx.bookkeeper/delete-server-data? true
+ :onyx.bookkeeper/ledger-password "INSECUREDEFAULTPASSWORD"
+ :onyx.bookkeeper/ledger-id-written-back-off 50
  ;:onyx.bookkeeper/client-timeout 120000
  :zookeeper/server? false
  :zookeeper.server/port 2188}
